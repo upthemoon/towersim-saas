@@ -6,6 +6,16 @@
 <title>送電線鉄塔工事 統合シミュレーター</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script>
+/* テーマ早期適用 (FOUC 防止) */
+(function(){
+  try{
+    var saved=localStorage.getItem('towerV5_theme');
+    var theme=saved||(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+    if(theme==='light')document.documentElement.setAttribute('data-theme','light');
+  }catch(e){}
+})();
+</script>
 <style>
 :root{
   --bg:#0b0f14;--bg2:#101620;--surface:#151d2a;--surface2:#1a2436;
@@ -15,9 +25,20 @@
   --red:#f87171;--red-lo:rgba(248,113,113,.12);--red-border:rgba(248,113,113,.25);--red-strong:rgba(248,113,113,.18);
   --amber:#fbbf24;--amber-lo:rgba(251,191,36,.12);--amber-border:rgba(251,191,36,.25);
   --orange:#fb923c;--purple:#a78bfa;--purple-lo:rgba(167,139,250,.12);
+  --header-grad:linear-gradient(160deg,#0d1422,#142035 55%,#0f1a2c);
   --radius:14px;--radius-sm:8px;
   --font:'BIZ UDGothic','Hiragino Kaku Gothic ProN',sans-serif;
   --mono:'JetBrains Mono','Menlo',monospace;
+}
+:root[data-theme="light"]{
+  --bg:#f5f1e8;--bg2:#fbf8ef;--surface:#ffffff;--surface2:#f0ebde;
+  --border:#c9bf9f;--border-hi:#a89e85;--text:#1c2434;--text-dim:#4a5468;--text-xdim:#6b7484;
+  --accent:#1d4ed8;--accent-lo:rgba(29,78,216,.10);--accent-md:rgba(29,78,216,.20);
+  --green:#15803d;--green-lo:rgba(21,128,61,.10);--green-border:rgba(21,128,61,.30);
+  --red:#b91c1c;--red-lo:rgba(185,28,28,.10);--red-border:rgba(185,28,28,.30);--red-strong:rgba(185,28,28,.15);
+  --amber:#a16207;--amber-lo:rgba(161,98,7,.10);--amber-border:rgba(161,98,7,.30);
+  --orange:#c2410c;--purple:#6d28d9;--purple-lo:rgba(109,40,217,.10);
+  --header-grad:linear-gradient(160deg,#fbf8ef,#f5f1e8 55%,#efe9d6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px;-webkit-text-size-adjust:100%}
@@ -25,7 +46,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:
 input[type="number"]{-moz-appearance:textfield}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
-.header{background:linear-gradient(160deg,#0d1422,#142035 55%,#0f1a2c);border-bottom:1px solid var(--border);padding:12px 22px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
+.header{background:var(--header-grad);border-bottom:1px solid var(--border);padding:12px 22px;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
 .header-inner{max-width:1480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .header h1{font-size:1.1rem;font-weight:700;display:flex;align-items:center;gap:9px}
 .header h1 .icon{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:var(--accent-lo);font-size:16px}
@@ -146,6 +167,13 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .summary-box.bad{border-color:var(--red-border);background:var(--red-lo)}
 .summary-box.warn-box{border-color:var(--amber-border);background:var(--amber-lo)}
 .summary-box .head{font-size:.82rem;font-weight:700;margin-bottom:6px}.summary-box .line{font-size:.86rem;margin-bottom:5px}
+.summary-box.good .head::before{content:"✓ ";color:var(--green);font-weight:900}
+.summary-box.bad .head::before{content:"⚠ ";color:var(--red);font-weight:900}
+.summary-box.warn-box .head::before{content:"! ";color:var(--amber);font-weight:900}
+/* キーボードフォーカスの可視化（色覚配慮＋アクセシビリティ） */
+button:focus-visible,.btn:focus-visible,.tab-btn:focus-visible,.add-btn-el:focus-visible,.theme-toggle:focus-visible,.remove-btn:focus-visible,.toggle-btn:focus-visible,.chip:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+a:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:3px}
 .info-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .info-chip{background:var(--bg2);border:1px solid var(--border);padding:12px;border-radius:10px}
 .info-chip .t{font-size:.72rem;color:var(--text-dim);font-weight:700;margin-bottom:4px}
@@ -168,11 +196,38 @@ tr.current{background:var(--accent-lo)}
 .pli{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:.15s}
 .pli:hover{border-color:var(--border-hi)}.pli .info{flex:1;min-width:0}.pli .pn{font-weight:700;font-size:.86rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pli .pd{font-size:.72rem;color:var(--text-dim)}.pli .acts{display:flex;gap:4px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:10px 24px;border-radius:10px;font-weight:700;font-size:.86rem;z-index:999;animation:fadeUp .3s ease}
+:root[data-theme="light"] .toast{color:#fff}
+.theme-toggle{padding:6px 9px;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--text-dim);font-size:.95rem;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;min-width:34px;min-height:30px;transition:all .15s}
+.theme-toggle:hover{border-color:var(--accent);color:var(--accent)}
+.intro-banner{max-width:1480px;margin:14px auto 0;padding:0 18px;display:none}
+.intro-banner.show{display:block}
+.intro-banner-inner{background:var(--accent-lo);border:1px solid var(--accent-md);border-left:4px solid var(--accent);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:.86rem;color:var(--text)}
+.intro-banner-inner .ico{font-size:1.2rem;flex-shrink:0}
+.intro-banner-inner .msg{flex:1;line-height:1.55}
+.intro-banner-inner .close{background:none;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;padding:6px 12px;border-radius:6px;font-size:.78rem;font-family:var(--font);font-weight:700;flex-shrink:0}
+.intro-banner-inner .close:hover{border-color:var(--accent);color:var(--accent)}
 @keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 
 @media print{body{background:#fff!important;color:#111!important;font-size:11px!important}.header,.toolbar,.tab-bar,.btn,.add-btn-el,.remove-btn,.slider-wrap input[type=range],.modal-overlay,.no-print{display:none!important}.app{display:block!important;padding:0!important}.card,.kpi,.hero-box,.summary-box,.info-chip,.cost-card,.cmp,.alert{background:#fff!important;border-color:#ccc!important;color:#111!important;break-inside:avoid}.kpi-value,.hero-value,.formula-box strong,.blue{color:#0066cc!important}.green,.td-green{color:#008844!important}.red,.td-red{color:#cc0000!important}.amber{color:#aa6600!important}}
 @media(max-width:1100px){.app{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}.hero-grid,.info-list{grid-template-columns:1fr}.add-grid{grid-template-columns:1fr 1fr}.cost-top{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){html{font-size:14px}.header{padding:10px 14px}.toolbar{padding:6px 14px;top:48px}.tab-bar{top:86px;padding:0 14px}.app{padding:12px}.cost-top{grid-template-columns:1fr}}
+@media(max-width:700px){
+  html{font-size:16px}
+  .header{padding:10px 14px}.toolbar{padding:6px 14px;top:48px}.tab-bar{top:86px;padding:0 14px}.app{padding:12px}.cost-top{grid-template-columns:1fr}
+  .btn{padding:10px 14px;font-size:.85rem;min-height:40px}
+  .add-btn-el{padding:12px 16px;font-size:.9rem;min-height:44px}
+  .remove-btn{padding:10px 12px;min-width:40px;min-height:40px;font-size:1.1rem}
+  .tab-btn{padding:14px 14px;font-size:.92rem}
+  .toggle-btn,.chip{padding:14px 16px;font-size:.92rem;min-height:44px}
+  .theme-toggle{min-width:40px;min-height:40px;font-size:1.1rem}
+  .num-input,.text-input,select,textarea{font-size:1rem;padding:12px}
+  .slider-wrap input[type=range]{height:44px;background:transparent}
+  .slider-wrap input[type=range]::-webkit-slider-runnable-track{height:8px;background:var(--border);border-radius:999px}
+  .slider-wrap input[type=range]::-moz-range-track{height:8px;background:var(--border);border-radius:999px}
+  .slider-wrap input[type=range]::-webkit-slider-thumb{width:28px;height:28px;margin-top:-10px}
+  .slider-wrap input[type=range]::-moz-range-thumb{width:28px;height:28px}
+  .tg button{padding:10px 16px;font-size:.85rem;min-height:38px}
+  .radio-item{padding:14px;font-size:.95rem}
+}
 </style>
 </head>
 <body>
@@ -191,6 +246,15 @@ tr.current{background:var(--accent-lo)}
   <div class="tb-sep"></div>
   <button class="btn" onclick="exportJSON()">⬇ JSON出力</button>
   <label class="btn" style="cursor:pointer">⬆ JSON読込<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
+  <div class="tb-sep"></div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="表示モード切替" title="表示モード切替"><span id="themeIcon">🌙</span></button>
+</div></div>
+
+<!-- INTRO BANNER (first-time users) -->
+<div class="intro-banner" id="introBanner"><div class="intro-banner-inner">
+  <span class="ico" aria-hidden="true">💡</span>
+  <div class="msg"><strong>サンプル案件を表示中です。</strong>金額や人数を変えて挙動を確認できます。空白から始めたい場合は上部の「📄 新規」ボタンを押してください。</div>
+  <button class="close" onclick="dismissIntro()" aria-label="サンプル案内を閉じる">閉じる</button>
 </div></div>
 
 <!-- TAB BAR -->
@@ -325,9 +389,13 @@ function openM(id){$(id).classList.add('show');}
 function closeM(id){$(id).classList.remove('show');}
 function toast(msg){const e=document.createElement('div');e.className='toast';e.textContent=msg;document.body.appendChild(e);setTimeout(()=>e.remove(),2000);}
 function switchTab(id){document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['lump','nego','internal'][i]===id));document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+id));if(id==='internal')calcI();if(id==='nego')calcN();}
+function applyThemeIcon(){var t=document.documentElement.getAttribute('data-theme');var el=$('themeIcon');if(el)el.textContent=t==='light'?'☀':'🌙';}
+function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';var next=cur==='light'?'dark':'light';if(next==='light')document.documentElement.setAttribute('data-theme','light');else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem('towerV5_theme',next);}catch(e){}applyThemeIcon();}
+applyThemeIcon();
 
 /* ═══ CONSTANTS ═══ */
-const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard'},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'光熱費',amount:80000,kind:'fixed',base:'standard'},{id:5,name:'借入返済',amount:150000,kind:'fixed',base:'standard'},{id:6,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
+const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'光熱費',amount:80000,kind:'fixed',base:'standard'},{id:5,name:'借入返済',amount:150000,kind:'fixed',base:'standard'},{id:6,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
+function isLaborCost(c){return c.isLabor===true||(c.isLabor==null&&/人件費|労務|給与/.test(c.name||''));}
 const STORAGE='towerV5_projects';const TPL_STORAGE='towerV5_tpl';const LAST_KEY='towerV5_last';
 
 /* ═══ STATE ═══ */
@@ -347,7 +415,7 @@ function syncShared(){/* noop */}
 /* ═══ COST ENGINE ═══ */
 function calcCosts(costs,siRate,pDays,sDays,aDays){
   const rows=[];let total=0,fixed=0,variable=0,direct=0;
-  let labM=0;costs.forEach(c=>{if(/人件費|労務|給与/.test(c.name))labM+=c.amount;});
+  let labM=0;costs.forEach(c=>{if(isLaborCost(c))labM+=c.amount;});
   const siA=Math.round(labM*(siRate/100));
   const eff=[...costs];if(siRate>0)eff.push({id:'_si',name:'法定福利費（自動）',amount:siA,kind:'variable',base:'standard',auto:true});
   eff.forEach(c=>{let a=0,n='';if(c.kind==='direct'){a=c.amount;n='直接費';direct+=a;}else{const bd=(c.base==='actual'?aDays:sDays)||1;a=c.amount/bd*pDays;n=c.auto?`人件費${yen(labM)}×${siRate}%÷${bd}×${pDays}日`:`${yen(Math.round(c.amount/bd))}×${pDays}日`;if(c.kind==='fixed')fixed+=a;else variable+=a;}total+=a;rows.push({name:c.name,allocated:a,note:n,auto:c.auto});});
@@ -371,7 +439,9 @@ function renderCostList(elId,state,recalcFn){
   el.innerHTML=state.costs.map(c=>{
     const tb=c.kind==='fixed'?'<span class="badge-pill badge-fixed">固定</span>':c.kind==='variable'?'<span class="badge-pill badge-variable">変動</span>':'<span class="badge-pill badge-direct">直接</span>';
     const id=Number(c.id)|0;
-    return `<div class="cost-card"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" onchange="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}</div></div>`;
+    const lab=isLaborCost(c);
+    const labBadge=lab?'<span class="badge-pill" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
+    return `<div class="cost-card"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" onchange="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}<label style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim);cursor:pointer;margin-left:auto"><input type="checkbox" ${lab?'checked':''} onchange="updC('${elId}',${id},'isLabor',this.checked)" style="cursor:pointer">人件費として扱う</label></div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}
@@ -383,8 +453,9 @@ function updC(elId,id,key,val){
   if(key==='amount'){c[key]=val===''?0:Number(val)||0;}
   else if(key==='kind'){const valid=['fixed','variable','direct'];c[key]=valid.includes(val)?val:'variable';}
   else if(key==='name'){c[key]=String(val).slice(0,100);}
+  else if(key==='isLabor'){c[key]=!!val;}
   else {c[key]=val;}
-  if(key==='kind')renderCostList(elId,s,getRecalcFor(elId));
+  if(key==='kind'||key==='isLabor')renderCostList(elId,s,getRecalcFor(elId));
   recalcOf(elId)();
 }
 function rmC(elId,id){const s=getStateFor(elId);s.costs=s.costs.filter(c=>c.id!==id);renderCostList(elId,s,getRecalcFor(elId));recalcOf(elId)();}
@@ -634,13 +705,17 @@ function sanitizeCosts(arr){
   if(!Array.isArray(arr))return null;
   const validKinds=['fixed','variable','direct'];
   const validBases=['standard','actual'];
-  return arr.slice(0,200).map(c=>({
-    id:Number(c&&c.id)|0,
-    name:String(c&&c.name||'').slice(0,100),
-    amount:Number.isFinite(+(c&&c.amount))?+(c.amount):0,
-    kind:validKinds.includes(c&&c.kind)?c.kind:'variable',
-    base:validBases.includes(c&&c.base)?c.base:'standard',
-  }));
+  return arr.slice(0,200).map(c=>{
+    const out={
+      id:Number(c&&c.id)|0,
+      name:String(c&&c.name||'').slice(0,100),
+      amount:Number.isFinite(+(c&&c.amount))?+(c.amount):0,
+      kind:validKinds.includes(c&&c.kind)?c.kind:'variable',
+      base:validBases.includes(c&&c.base)?c.base:'standard',
+    };
+    if(c&&typeof c.isLabor==='boolean')out.isLabor=c.isLabor;
+    return out;
+  });
 }
 function sanitizeState(d){
   if(!d||typeof d!=='object')return null;
@@ -707,13 +782,29 @@ function saveTpl(){const raw=prompt('テンプレート名');if(!raw)return;cons
 function applyTpl(i){const t=loadTpls()[i];if(!t||!confirm('「'+t.name+'」を適用？'))return;SS.costs=JSON.parse(JSON.stringify(t.costs));SS.nextId=t.nextId||7;SS.siRate=t.siRate??16.5;renderCostCard('S_costCard',SS,'calcN();calcI()');calcN();calcI();closeM('tplMod');toast('テンプレ適用');}
 function delTpl(i){if(!confirm('削除？'))return;const t=loadTpls();t.splice(i,1);saveTpls(t);showTplModal();}
 
+/* ═══ INTRO (first-time sample scenario) ═══ */
+const INTRO_KEY='towerV5_intro_seen';
+function loadSample(){
+  $('L_name').value='サンプル：鉄塔工事10基';
+  $('L_amount').value=(20000000).toLocaleString('ja-JP');
+  $('tbName').textContent='サンプル案件';
+  $('introBanner').classList.add('show');
+}
+function dismissIntro(){
+  try{localStorage.setItem(INTRO_KEY,'1');}catch(e){}
+  $('introBanner').classList.remove('show');
+}
+
 /* ═══ INIT ═══ */
 renderCostCard('L_costCard',LS,'calcL()');
 renderCostCard('S_costCard',SS,'calcN();calcI()');
 renderWT();renderCM_shared();
 // Restore last project
 const lastId=localStorage.getItem(LAST_KEY);
+const introSeen=(()=>{try{return localStorage.getItem(INTRO_KEY)==='1';}catch{return false;}})();
+const hasSavedProjects=loadAll().length>0;
 if(lastId){const all=loadAll();const p=all.find(x=>x.id===lastId);if(p){currentProjectId=lastId;applyAll(p.data);$('tbName').textContent=p.name;}else{calcL();calcN();calcI();}}
+else if(!introSeen&&!hasSavedProjects){loadSample();calcL();calcN();calcI();}
 else{calcL();calcN();calcI();}
 </script>
 </body>

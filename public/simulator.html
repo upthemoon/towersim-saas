@@ -211,14 +211,27 @@ tr.current{background:var(--accent-lo)}
 .print-only{display:none}
 @media print{
   @page{size:A4;margin:14mm 12mm}
+  /* 印刷時はテーマに関わらず CSS 変数を白基調に上書き */
+  :root,:root[data-theme="light"]{
+    --bg:#fff;--bg2:#fff;--surface:#fff;--surface2:#fff;
+    --border:#999;--border-hi:#777;
+    --text:#111;--text-dim:#444;--text-xdim:#666;
+    --accent:#0d4ea0;--accent-lo:#e9f0f9;--accent-md:#cfdcef;
+    --green:#0a6c34;--green-lo:#eaf6ee;--green-border:#7fbe92;
+    --red:#a01515;--red-lo:#fbeded;--red-border:#d29c9c;--red-strong:#fbeded;
+    --amber:#8a5a00;--amber-lo:#fbf3df;--amber-border:#d6b97b;
+    --orange:#a04400;--purple:#6d28d9;--purple-lo:#efebfd;
+    --header-grad:#fff;
+  }
   body{background:#fff!important;color:#111!important;font-size:10.5pt!important;line-height:1.5}
+  .formula-box,.memo-box,.proposal-box,.gauge-track{background:#f6f6f6!important;border-color:#999!important;color:#111!important}
   .header,.toolbar,.tab-bar,.btn,.add-btn-el,.remove-btn,.slider-wrap input[type=range],.slider-labels,.slider-current,.modal-overlay,.intro-banner,.theme-toggle,.tg,.toggle-btn,.chip,.field-help,.no-print{display:none!important}
   .app{display:block!important;padding:0!important;max-width:none!important}
   .col{display:block!important}
-  /* 全タブを順番に表示 */
-  .tab-pane{display:block!important}
-  .tab-pane+.tab-pane{page-break-before:always}
-  .tab-pane::before{content:attr(data-print-title);display:block;font-size:14pt;font-weight:800;padding:8px 12px;background:#222!important;color:#fff!important;border-radius:4px;margin:0 0 14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* アクティブなタブだけ印刷（既定 .tab-pane.active は display:block） */
+  .tab-pane{display:none!important}
+  .tab-pane.active{display:block!important}
+  .tab-pane.active::before{content:attr(data-print-title);display:block;font-size:14pt;font-weight:800;padding:8px 12px;background:#222!important;color:#fff!important;border-radius:4px;margin:0 0 14px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   /* カード等の見やすさ */
   .card,.kpi,.hero-box,.summary-box,.info-chip,.cost-card,.cmp,.alert{background:#fff!important;border:1px solid #999!important;color:#111!important;break-inside:avoid;page-break-inside:avoid;margin-bottom:8px}
   .card{padding:12px 14px!important}

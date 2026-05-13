@@ -471,7 +471,81 @@ applyThemeIcon();
 
 /* ═══ CONSTANTS ═══ */
 const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'光熱費',amount:80000,kind:'fixed',base:'standard'},{id:5,name:'借入返済',amount:150000,kind:'fixed',base:'standard'},{id:6,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
-function isLaborCost(c){return c.isLabor===true||(c.isLabor==null&&/人件費|労務|給与/.test(c.name||''));}
+/* よく使うコスト項目のプリセット (項目を選ぶと区分・按分基準・isLabor が自動セットされる) */
+const COST_PRESETS=[
+  /* 変動費 (月額按分・案件規模で変わる) */
+  {name:'人件費',kind:'variable',base:'standard',isLabor:true},
+  {name:'労務費',kind:'variable',base:'standard',isLabor:true},
+  {name:'給与',kind:'variable',base:'standard',isLabor:true},
+  {name:'残業手当',kind:'variable',base:'standard',isLabor:true},
+  {name:'賞与引当',kind:'variable',base:'standard',isLabor:true},
+  {name:'燃料費',kind:'variable',base:'standard'},
+  {name:'ガソリン代',kind:'variable',base:'standard'},
+  {name:'軽油代',kind:'variable',base:'standard'},
+  {name:'高速代',kind:'variable',base:'standard'},
+  {name:'駐車場代',kind:'variable',base:'standard'},
+  {name:'産廃処分費',kind:'variable',base:'standard'},
+  {name:'出張旅費',kind:'variable',base:'standard'},
+  /* 固定費 (月額按分・案件と関係なく毎月) */
+  {name:'事務所家賃',kind:'fixed',base:'standard'},
+  {name:'倉庫家賃',kind:'fixed',base:'standard'},
+  {name:'光熱費',kind:'fixed',base:'standard'},
+  {name:'電気代',kind:'fixed',base:'standard'},
+  {name:'水道代',kind:'fixed',base:'standard'},
+  {name:'通信費',kind:'fixed',base:'standard'},
+  {name:'電話代',kind:'fixed',base:'standard'},
+  {name:'インターネット代',kind:'fixed',base:'standard'},
+  {name:'借入返済',kind:'fixed',base:'standard'},
+  {name:'リース料',kind:'fixed',base:'standard'},
+  {name:'重機リース料',kind:'fixed',base:'standard'},
+  {name:'車両リース料',kind:'fixed',base:'standard'},
+  {name:'労災保険料',kind:'fixed',base:'standard'},
+  {name:'自動車保険料',kind:'fixed',base:'standard'},
+  {name:'賠償責任保険料',kind:'fixed',base:'standard'},
+  {name:'固定資産税',kind:'fixed',base:'standard'},
+  {name:'退職金引当',kind:'fixed',base:'standard'},
+  {name:'減価償却費',kind:'fixed',base:'standard'},
+  {name:'顧問料',kind:'fixed',base:'standard'},
+  {name:'求人広告費',kind:'fixed',base:'standard'},
+  {name:'福利厚生費',kind:'fixed',base:'standard'},
+  /* 直接費 (案件専用・按分なし) */
+  {name:'案件直接費',kind:'direct',base:'standard'},
+  {name:'材料費',kind:'direct',base:'standard'},
+  {name:'鋼材費',kind:'direct',base:'standard'},
+  {name:'鉄筋費',kind:'direct',base:'standard'},
+  {name:'コンクリート費',kind:'direct',base:'standard'},
+  {name:'型枠費',kind:'direct',base:'standard'},
+  {name:'足場リース',kind:'direct',base:'standard'},
+  {name:'仮設トイレ',kind:'direct',base:'standard'},
+  {name:'現場事務所設置費',kind:'direct',base:'standard'},
+  {name:'運搬費',kind:'direct',base:'standard'},
+  {name:'専門業者請負費',kind:'direct',base:'standard'},
+  {name:'鉄筋工事費',kind:'direct',base:'standard'},
+  {name:'型枠工事費',kind:'direct',base:'standard'},
+  {name:'電気工事費',kind:'direct',base:'standard'},
+  {name:'配管工事費',kind:'direct',base:'standard'},
+  {name:'防水工事費',kind:'direct',base:'standard'},
+  {name:'塗装工事費',kind:'direct',base:'standard'},
+];
+function findCostPreset(name){return COST_PRESETS.find(p=>p.name===name);}
+function applyCostPreset(elId,name){
+  const p=findCostPreset((name||'').trim());
+  if(!p)return;
+  if(p.kind)$(elId+'_nk').value=p.kind;
+  if(p.base)$(elId+'_nb').value=p.base;
+}
+/* 静的に datalist を 1 つだけ document に追加 (両カードで共有) */
+(function injectDatalist(){
+  if(document.getElementById('costNamePresets'))return;
+  const dl=document.createElement('datalist');
+  dl.id='costNamePresets';
+  dl.innerHTML=COST_PRESETS.map(p=>{
+    const labelKind=p.kind==='variable'?'変動':p.kind==='fixed'?'固定':'直接';
+    return `<option value="${p.name}" label="${labelKind}"></option>`;
+  }).join('');
+  document.body.appendChild(dl);
+})();
+function isLaborCost(c){return c.isLabor===true||(c.isLabor==null&&/人件費|労務|給与|賞与|残業/.test(c.name||''));}
 const STORAGE='towerV5_projects';const TPL_STORAGE='towerV5_tpl';const LAST_KEY='towerV5_last';
 
 /* ═══ STATE ═══ */
@@ -526,7 +600,7 @@ function renderCostCard(elId,state,recalcFn){
       法定福利費は「人件費として扱う」項目の合計に対して自動計算されます。
     </div>
     <div id="${elId}_list"></div>
-    <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目</label><input class="text-input" id="${elId}_nn" placeholder="通信費"></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>`;
+    <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目 <span style="color:var(--text-xdim);font-weight:400">(候補から選択 or 自由入力)</span></label><input class="text-input" id="${elId}_nn" placeholder="例: 通信費・燃料費 etc." list="costNamePresets" oninput="applyCostPreset('${elId}',this.value)"></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>`;
   renderCostList(elId,state,recalcFn);
 }
 function renderCostList(elId,state,recalcFn){
@@ -562,13 +636,16 @@ function addCostTo(elId){
   const rawBase=$(elId+'_nb').value;
   const rawName=String($(elId+'_nn').value||'').slice(0,100).trim();
   const newId=s.nextId++;
-  s.costs.push({
+  const preset=findCostPreset(rawName);
+  const entry={
     id:newId,
     name:rawName||'新規項目（要編集）',
     amount:Number($(elId+'_na').value)||0,
     kind:validKinds.includes(rawKind)?rawKind:'variable',
     base:validBases.includes(rawBase)?rawBase:'standard',
-  });
+  };
+  if(preset&&preset.isLabor)entry.isLabor=true;
+  s.costs.push(entry);
   $(elId+'_nn').value='';
   $(elId+'_na').value='';
   $(elId+'_nk').value='variable';

@@ -114,8 +114,10 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .radio-item.active .radio-dot::after{transform:scale(1)}
 .rate-mini{font-size:.72rem;color:var(--text-dim);margin-left:4px}
 
-.cost-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
-.cost-top{display:grid;grid-template-columns:1.2fr .95fr .95fr auto;gap:8px;align-items:end}
+.cost-card{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px;padding-right:42px;margin-bottom:10px}
+.cost-top{display:grid;grid-template-columns:1.2fr .95fr .95fr;gap:8px;align-items:end}
+.cost-card .remove-btn{position:absolute;top:6px;right:6px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:transparent;border:1px solid transparent;color:var(--red);font-size:.95rem;cursor:pointer;opacity:.65;padding:0;transition:all .15s}
+.cost-card .remove-btn:hover{opacity:1;background:var(--red-lo);border-color:var(--red-border)}
 .cost-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .badge-pill{font-size:.68rem;font-weight:700;border-radius:999px;padding:4px 8px;border:1px solid var(--border)}
 .badge-fixed{color:var(--amber);background:var(--amber-lo);border-color:var(--amber-border)}
@@ -282,12 +284,25 @@ tr.current{background:var(--accent-lo)}
 @media(max-width:1100px){.app{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}.hero-grid,.info-list{grid-template-columns:1fr}.add-grid{grid-template-columns:1fr 1fr}.cost-top{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){
   html{font-size:16px}
-  .header{padding:10px 14px}.toolbar{padding:6px 14px;top:48px}.tab-bar{top:86px;padding:0 14px}.app{padding:12px}.cost-top{grid-template-columns:1fr}
+  .header{padding:10px 14px}.toolbar{padding:6px 14px;top:48px}.tab-bar{top:86px;padding:0 14px}.app{padding:12px;gap:14px}.cost-top{grid-template-columns:1fr}
   .grid-2{grid-template-columns:1fr}
   .hero-grid{grid-template-columns:1fr}
+  /* カード/間隔の最適化 */
+  .card{padding:14px 14px}
+  .col{gap:14px}
+  .field{margin-bottom:14px}
+  /* モーダル: スマホでは余白を詰める */
+  .modal-overlay{padding:8px}
+  .modal{padding:18px 16px;max-height:92vh}
+  /* コストカードの ✕ ボタン (タップ領域を確保) */
+  .cost-card{padding-right:48px}
+  .cost-card .remove-btn{width:38px;height:38px;font-size:1.05rem;top:8px;right:8px;padding:0;min-width:0;min-height:0}
+  /* 追加フォームの ✕ クリアボタン (タップ領域) */
+  .theme-toggle,button[aria-label="クリア"]{min-width:38px;min-height:38px}
   .btn{padding:10px 14px;font-size:.85rem;min-height:40px}
   .add-btn-el{padding:12px 16px;font-size:.9rem;min-height:44px}
-  .remove-btn{padding:10px 12px;min-width:40px;min-height:40px;font-size:1.1rem}
+  /* 旧 .remove-btn (現存しないが既存スタイルとの整合用) */
+  .remove-btn:not(.cost-card .remove-btn){padding:10px 12px;min-width:40px;min-height:40px;font-size:1.1rem}
   .tab-btn{padding:14px 14px;font-size:.92rem}
   .toggle-btn,.chip{padding:14px 16px;font-size:.92rem;min-height:44px}
   .theme-toggle{min-width:40px;min-height:40px;font-size:1.1rem}
@@ -380,7 +395,7 @@ tr.current{background:var(--accent-lo)}
   <div class="card"><div class="card-title">工種</div>
     <div class="field">
       <label class="field-label">工事種別</label>
-      <input type="text" class="text-input" id="S_workType" placeholder="例：土木工事・建築工事・解体工事" oninput="SS.workType=this.value;calcN();calcI()">
+      <input type="text" class="text-input" id="S_workType" placeholder="例：土木工事・建築工事・解体工事" list="workTypePresets" oninput="SS.workType=this.value;calcN();calcI()">
     </div>
   </div>
   <div class="card"><div class="card-title">工法倍率</div>
@@ -397,8 +412,8 @@ tr.current{background:var(--accent-lo)}
   <div class="card"><div class="card-title">交渉条件</div>
     <div class="grid-2"><div class="field"><label class="field-label">標準稼働日数</label><input type="number" class="num-input" id="S_stdDays" value="20" oninput="syncShared();calcN();calcI()"></div><div class="field"><label class="field-label">当月実績稼働日数</label><input type="number" class="num-input" id="S_actDays" value="18" oninput="syncShared();calcN();calcI()"></div></div>
     <div class="field"><label class="field-label">現在提示単価 <span class="slider-current" id="N_curD">¥40,000</span></label><div class="slider-wrap"><input type="range" min="20000" max="100000" step="1000" value="40000" id="N_curS" oninput="syncSV(this,'N_cur','N_curD');calcN()"><input type="number" class="num-input" style="width:120px;flex:none" id="N_cur" value="40000" oninput="syncNV(this,'N_curS','N_curD');calcN()"></div></div>
-    <div class="grid-2"><div class="field"><label class="field-label">目標利益率 <span class="slider-current" id="S_mD">20%</span></label><div class="slider-wrap"><input type="range" min="0" max="40" step="1" value="20" id="S_mS" oninput="$('S_m').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"><input type="number" class="num-input" style="width:80px;flex:none" id="S_m" value="20" oninput="$('S_mS').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"></div></div><div class="field"><label class="field-label">その他控除（円）</label><input type="number" class="num-input" id="S_extra" value="0" oninput="syncShared();calcN();calcI()"></div></div>
     <div class="field"><label class="field-label">提案着地単価 <span class="slider-current" id="N_propD">¥60,000</span></label><div class="slider-wrap"><input type="range" min="20000" max="120000" step="1000" value="60000" id="N_propS" oninput="syncSV(this,'N_prop','N_propD');calcN()"><input type="number" class="num-input" style="width:120px;flex:none" id="N_prop" value="60000" oninput="syncNV(this,'N_propS','N_propD');calcN()"></div></div>
+    <div class="grid-2"><div class="field"><label class="field-label">目標利益率 <span class="slider-current" id="S_mD">20%</span></label><div class="slider-wrap"><input type="range" min="0" max="40" step="1" value="20" id="S_mS" oninput="$('S_m').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"><input type="number" class="num-input" style="width:80px;flex:none" id="S_m" value="20" oninput="$('S_mS').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"></div></div><div class="field"><label class="field-label">その他控除（円）</label><input type="number" class="num-input" id="S_extra" value="0" oninput="syncShared();calcN();calcI()"></div></div>
   </div>
   <div class="card"><div class="card-title">売上構成・消費税 <span class="badge warn">人件費単価とは別に発生する売上</span></div>
     <div class="field">
@@ -550,16 +565,25 @@ function applyCostPreset(elId,name){
   if(p.kind)$(elId+'_nk').value=p.kind;
   if(p.base)$(elId+'_nb').value=p.base;
 }
-/* 静的に datalist を 1 つだけ document に追加 (両カードで共有) */
+/* 静的に datalist を document に追加 */
 (function injectDatalist(){
-  if(document.getElementById('costNamePresets'))return;
-  const dl=document.createElement('datalist');
-  dl.id='costNamePresets';
-  dl.innerHTML=COST_PRESETS.map(p=>{
-    const labelKind=p.kind==='variable'?'変動':p.kind==='fixed'?'固定':'直接';
-    return `<option value="${p.name}" label="${labelKind}"></option>`;
-  }).join('');
-  document.body.appendChild(dl);
+  if(!document.getElementById('costNamePresets')){
+    const dl=document.createElement('datalist');
+    dl.id='costNamePresets';
+    dl.innerHTML=COST_PRESETS.map(p=>{
+      const labelKind=p.kind==='variable'?'変動':p.kind==='fixed'?'固定':'直接';
+      return `<option value="${p.name}" label="${labelKind}"></option>`;
+    }).join('');
+    document.body.appendChild(dl);
+  }
+  /* 工事種別の標準候補 (建設業の一般的な工種) */
+  if(!document.getElementById('workTypePresets')){
+    const wt=['土木工事','建築工事','解体工事','鉄塔工事','送電線工事','配管工事','電気工事','通信工事','防水工事','塗装工事','内装工事','外構工事','仮設工事','設備工事','造園工事','舗装工事','基礎工事','鉄筋工事','型枠工事','コンクリート工事','足場工事','保守点検'];
+    const dl2=document.createElement('datalist');
+    dl2.id='workTypePresets';
+    dl2.innerHTML=wt.map(n=>`<option value="${n}"></option>`).join('');
+    document.body.appendChild(dl2);
+  }
 })();
 function isLaborCost(c){return c.isLabor===true||(c.isLabor==null&&/人件費|労務|給与|賞与|残業/.test(c.name||''));}
 const STORAGE='towerV5_projects';const TPL_STORAGE='towerV5_tpl';const LAST_KEY='towerV5_last';
@@ -628,7 +652,7 @@ function renderCostList(elId,state,recalcFn){
     const id=Number(c.id)|0;
     const lab=isLaborCost(c);
     const labBadge=lab?'<span class="badge-pill" title="法定福利費の自動計算対象 (項目名に人件費/労務/給与/賞与/残業 を含むと自動)" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
-    return `<div class="cost-card" data-cost-id="${id}"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}</div></div>`;
+    return `<div class="cost-card" data-cost-id="${id}"><button class="remove-btn" aria-label="削除" title="この項目を削除" onclick="rmC('${elId}',${id})">✕</button><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" list="costNamePresets" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div></div><div class="cost-meta">${tb}${labBadge}</div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}

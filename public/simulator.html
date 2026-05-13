@@ -415,6 +415,10 @@ tr.current{background:var(--accent-lo)}
   </div>
 </div>
 <div class="col">
+  <div id="L_alert"></div>
+  <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">上乗せ余力/人工 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(余剰÷人工)</span></span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
+  <div class="card"><div class="card-title"><span class="badge">契約金額の感度</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">契約金額を変えた時の利益・上乗せ余力の変化</span></div><div class="table-wrap"><table><thead><tr><th>契約金額</th><th>目標利益</th><th>残額 (余剰)</th><th>上乗せ余力/人工</th><th>利益率</th></tr></thead><tbody id="L_sens"></tbody></table></div></div>
+  <div class="card"><div class="card-title"><span class="badge">単価の階層分解</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">1人工あたりの内訳</span></div><div id="L_waterfall" class="waterfall"></div></div>
   <div class="card"><div class="card-title"><span class="badge">1人工単価の検証</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">給与水準と業界相場の比較</span></div>
     <div class="cmp">
       <div class="cmp-row"><div class="cmp-l">給与 (人件費按分/人工)</div><div class="cmp-v" id="L_cPay">---</div></div>
@@ -429,11 +433,7 @@ tr.current{background:var(--accent-lo)}
     </div>
     <div><div style="font-size:.66rem;color:var(--text-xdim);margin-bottom:5px">業界相場に対する 実支給上限 の充足率</div><div class="gauge-track"><div class="gauge-fill gg" id="L_gauge" style="width:0%">0%</div></div><div class="gauge-labels"><span>0%</span><span>50%</span><span>100%</span><span>120%</span></div></div>
   </div>
-  <div id="L_alert"></div>
-  <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価 (余剰/人工)</span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
-  <div class="card"><div class="card-title"><span class="badge">単価の階層分解</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">1人工あたりの内訳</span></div><div id="L_waterfall" class="waterfall"></div></div>
   <div class="card"><div class="card-title"><span class="badge">コスト内訳</span></div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分後</th><th>算式</th></tr></thead><tbody id="L_cb"></tbody></table></div></div>
-  <div class="card"><div class="card-title"><span class="badge">契約金額の感度</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">契約金額を変えた時の利益・実質単価の変化</span></div><div class="table-wrap"><table><thead><tr><th>契約金額</th><th>目標利益</th><th>残額 (余剰)</th><th>実質単価/人工</th><th>利益率</th></tr></thead><tbody id="L_sens"></tbody></table></div></div>
   <div class="card"><div class="card-title"><span class="badge">交渉メモ</span></div><div class="memo-box" id="L_memo">入力後に自動生成</div></div>
 </div>
 </div>
@@ -865,7 +865,7 @@ function calcL(){
     $('L_waterfall').innerHTML='<div style="padding:14px;color:var(--text-dim);font-size:.85rem">体制 (人数・日数) を入力すると単価分解が表示されます</div>';
   }
   renderBreakdown('L_cb',cd.rows);
-  /* 契約金額の感度表: 契約金額を変えた時の利益と実質単価 */
+  /* 契約金額の感度表: 契約金額を変えた時の利益と上乗せ余力/人工 */
   if(ok&&md>0){
     const aStep=rev>=80000000?5000000:rev>=20000000?2000000:rev>=8000000?1000000:rev>=2000000?500000:200000;
     const aSet=new Set([
@@ -899,9 +899,14 @@ function calcL(){
   }
 
   if(!ok||md<=0){$('L_memo').textContent='入力後に自動生成';return;}
-  let m=`【概要】\n売上${yen(rev)} − 経費${yen(Math.round(cd.total))}（福利費込）− 利益${yen(tp)} → 残額${yen(lab)}\n\n【体制】${pp}人×${dd}日＝${fm(md)}人工 → 実質${yen(Math.round(up))}\n\n【比較】要望${yen(rp)}に対し${diff>=0?'+':''}${yen(Math.round(diff))}/人工（${dr>=0?'+':''}${dr.toFixed(1)}%）\n全体${diff>=0?'余裕':'不足'}：${(diff>=0?'+':'')}${yen(Math.round(td))}`;
-  if(dr<-10)m+=`\n\n🔴【交渉】\n増額${yen(Math.round(sh))} → 税別${yen(req)}以上`;
-  else if(dr<0)m+=`\n\n⚡【検討】+${yen(Math.round(sh))}増額を検討`;
+  let m=`【契約条件】\n税別売上 ${yen(rev)} ／ ${pp}人×${dd}日 ＝ ${fm(md)}人工\n\n`;
+  m+=`【コスト・利益】\n諸経費合計 ${yen(Math.round(cd.total))}（法定福利費込）\n目標利益 ${yen(tp)}（${LS.profMode==='rate'?(parseFloat($('L_profR').value)||0).toFixed(1)+'%':'金額固定'}）\n残額 (余剰) ${yen(lab)}\n\n`;
+  m+=`【1人工あたりの内訳】\n給与（人件費按分）${yen(Math.round(payPerU))}\n＋ 上乗せ余力（余剰÷人工）${(surplusPerU>=0?'+':'')}${yen(Math.round(surplusPerU))}\n＝ 実支給上限 ${yen(Math.round(totalPerU))}\n\n`;
+  m+=`【業界相場との比較】\n業界相場・希望労務単価 ${yen(rp)}\n給与のみ vs 業界相場 ${(diffPay>=0?'+':'')}${yen(Math.round(diffPay))}/人工\n実支給上限 vs 業界相場 ${(diffTotal>=0?'+':'')}${yen(Math.round(diffTotal))}/人工\n体制全体 ${(diffTotal>=0?'+':'')}${yen(Math.round(diffTotal*md))}（${fm(md)}人工 × ${(diffTotal>=0?'+':'')}${yen(Math.round(diffTotal))}）`;
+  if(lab<0)m+=`\n\n🚨【赤字警告】\n諸経費 + 目標利益 が売上を超過。\n不足額 ${yen(Math.abs(lab))} の改善が必要。`;
+  else if(diffPay<0&&diffTotal<0)m+=`\n\n🔴【要交渉】\n給与・上乗せ余力 込みでも業界相場に届かず。\n必要売上 ${yen(Math.round(needRev))} 以上で交渉を。`;
+  else if(diffPay<0&&diffTotal>=0)m+=`\n\n⚡【参考】\n給与だけでは業界相場 ${yen(rp)} に届かないが、上乗せ余力でカバー (実支給上限 ${yen(Math.round(totalPerU))})。`;
+  else m+=`\n\n✅【適正】\n業界相場 +${(diffTotal/rp*100).toFixed(1)}% で受注可能。`;
   $('L_memo').textContent=m;
 }
 

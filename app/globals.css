@@ -1,26 +1,49 @@
 @import "tailwindcss";
 
+/* TowerSim ブランドカラー: 建設・図面・硬派 */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #F4EDDC;        /* 古紙 */
+  --paper-2: #E8DEC4;      /* 麻紙 */
+  --ink: #1A1A1A;          /* 墨 */
+  --ink-2: #5C5C5C;        /* 薄墨 */
+  --steel: #2B3F66;        /* 紺青 */
+  --steel-dark: #1A2B4A;   /* 深紺墨 */
+  --rust: #B23F38;         /* 朱印 */
+  --rust-dark: #8A2E29;    /* 朱印深 */
+  --rule: #C9BF9F;         /* 罫線 */
+  --grid: rgba(43, 63, 102, 0.08);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-steel: var(--steel);
+  --color-steel-dark: var(--steel-dark);
+  --color-rust: var(--rust);
+  --color-rust-dark: var(--rust-dark);
+  --color-rule: var(--rule);
+  --font-sans: var(--font-noto);
+  --font-mincho: var(--font-mincho);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body { background: var(--paper); color: var(--ink); }
+
+/* 図面方眼背景（セクション装飾用） */
+.bg-blueprint {
+  background-image:
+    linear-gradient(to right, var(--grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* 朱印リボン用 */
+.stamp {
+  font-family: var(--font-mincho);
+  border: 2px solid var(--rust);
+  color: var(--rust);
+  padding: 4px 12px;
+  letter-spacing: 0.15em;
+  display: inline-block;
 }

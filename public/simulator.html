@@ -143,7 +143,8 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .badge-direct{color:var(--purple);background:var(--purple-lo);border-color:rgba(167,139,250,.25)}
 .remove-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:8px;opacity:.75}
 .remove-btn:hover{opacity:1}
-.add-grid{display:grid;grid-template-columns:3fr .8fr 1fr 1fr auto;gap:8px;align-items:end}
+.add-grid{display:grid;grid-template-columns:1.2fr 1.1fr 1fr auto;gap:8px;align-items:end}
+.add-grid > div:first-child{grid-column:1/-1}
 .add-btn-el{background:var(--accent-lo);border:1px solid var(--accent);border-radius:10px;color:var(--accent);padding:10px 14px;cursor:pointer;font-weight:700;font-size:.82rem;font-family:var(--font)}
 .auto-calc-badge{font-size:.65rem;color:var(--accent);background:var(--accent-lo);padding:2px 8px;border-radius:999px;margin-left:6px;font-weight:700}
 

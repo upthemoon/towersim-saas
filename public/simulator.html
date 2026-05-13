@@ -436,7 +436,27 @@ tr.current{background:var(--accent-lo)}
 
 <!-- MODALS -->
 <div class="modal-overlay" id="saveMod"><div class="modal"><h3>📁 案件を保存</h3><div class="field"><label class="field-label">案件名</label><input type="text" class="text-input" id="saveName"></div><div class="field"><label class="field-label">メモ</label><textarea class="text-input" id="saveMemo" rows="3"></textarea></div><div class="modal-acts"><button class="btn" onclick="closeM('saveMod')">キャンセル</button><button class="btn primary" onclick="doSave()">保存</button></div></div></div>
-<div class="modal-overlay" id="listMod"><div class="modal"><h3>📋 案件一覧<button class="btn danger" style="margin-left:auto" onclick="clearAll()">全削除</button></h3><div id="listBody"></div><div class="modal-acts"><button class="btn" onclick="closeM('listMod')">閉じる</button></div></div></div>
+<div class="modal-overlay" id="listMod"><div class="modal" style="max-width:720px"><h3 style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">📋 案件一覧<span id="listStats" style="font-size:.74rem;color:var(--text-dim);font-weight:400"></span><button class="btn danger" style="margin-left:auto;font-size:.72rem" onclick="clearAll()">全削除</button></h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+  <input class="text-input" id="listSearch" placeholder="🔍 案件名・工種・メモから検索" oninput="renderListBody()" style="grid-column:1/-1">
+  <select id="listYear" onchange="renderListBody()"></select>
+  <select id="listKind" onchange="renderListBody()"></select>
+  <select id="listAmount" onchange="renderListBody()">
+    <option value="all">金額すべて</option>
+    <option value="lt1000">〜1,000万</option>
+    <option value="1000-3000">1,000〜3,000万</option>
+    <option value="gt3000">3,000万〜</option>
+  </select>
+  <select id="listSort" onchange="renderListBody()">
+    <option value="updated_desc">更新日 ↓</option>
+    <option value="updated_asc">更新日 ↑</option>
+    <option value="amount_desc">金額 ↓</option>
+    <option value="amount_asc">金額 ↑</option>
+    <option value="name">名前順</option>
+  </select>
+</div>
+<div id="listBody" style="overflow-y:auto;max-height:50vh"></div>
+<div class="modal-acts"><button class="btn" onclick="closeM('listMod')">閉じる</button></div></div></div>
 <div class="modal-overlay" id="tplMod"><div class="modal"><h3>⚙ コストテンプレート</h3><div id="tplBody"></div><div class="modal-acts"><button class="btn primary" onclick="saveTpl()">現在のコストを保存</button><button class="btn" onclick="closeM('tplMod')">閉じる</button></div></div></div>
 
 <script>
@@ -470,8 +490,9 @@ function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme
 applyThemeIcon();
 
 /* ═══ CONSTANTS ═══ */
-/* 初回サンプル用のデフォルトコスト (一般管理費系=借入返済・光熱費 等は除外し、現場運営に直接関わる項目のみ) */
-const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'},{id:5,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
+/* 初回サンプル用のデフォルトコスト (一般管理費系=借入返済・光熱費 等は除外し、現場運営に直接関わる項目のみ。
+   直接費はサンプルでは含めず、ユーザーが案件特有のコストを認識して手動追加する設計) */
+const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'}];
 /* よく使うコスト項目のプリセット (現場運営に直接関わる項目のみ。
    一般管理費=本社経費系 (家賃・光熱費・借入返済・税金・退職金引当・減価償却費・顧問料)
    は工事原価ではなく諸経費として別計上すべきなので除外。必要なら手動入力で追加可能。) */
@@ -559,11 +580,13 @@ function renderCostCard(elId,state,recalcFn){
   $(elId).innerHTML=`<div class="card-title"><span class="badge">法定福利費</span><span class="badge warn">自動連動</span></div>
     <div class="field"><label class="field-label">法定福利費率 <span class="slider-current" id="${elId}_siD">${state.siRate}%</span></label><div class="slider-wrap"><input type="range" min="0" max="30" step="0.1" value="${state.siRate}" id="${elId}_siS" oninput="this.nextElementSibling.value=this.value;$('${elId}_siD').textContent=this.value+'%';${state===LS?'LS':'SS'}.siRate=parseFloat(this.value);${recalcFn}"><input type="number" class="num-input" style="width:80px;flex:none" id="${elId}_siR" value="${state.siRate}" step="0.1" oninput="this.previousElementSibling.value=this.value;$('${elId}_siD').textContent=this.value+'%';${state===LS?'LS':'SS'}.siRate=parseFloat(this.value);${recalcFn}"></div><div class="field-help">健保・厚生年金・雇用保険・労災等</div></div>
     <div class="card-title" style="margin-top:16px"><span class="badge warn">コスト入力</span></div>
-    <div class="field-help" style="margin-bottom:10px;line-height:1.6">
+    <div class="field-help" style="margin-bottom:10px;line-height:1.7">
       <strong style="color:var(--text)">按分方式</strong>:
-      月額（会社全体のコスト）÷ 標準稼働日数 × 案件実稼働日数 で配賦。<br>
-      区分: <strong>変動/固定</strong>=月額按分・<strong>直接</strong>=案件直接費（按分なし）。<br>
-      法定福利費は「人件費として扱う」項目の合計に対して自動計算されます。
+      月額（会社全体のコスト）÷ 按分日数 × 案件実稼働日数 で配賦。<br>
+      <strong>区分</strong>: 変動/固定 = 月額按分・直接 = 案件直接費（按分なし）。<br>
+      <strong>按分基準</strong>: 標準 = 月20日 (=標準稼働日数) を基準・実績 = 当月の実稼働日数を基準
+      <span style="color:var(--text-xdim)">（雨等で稼働日が減った月の正確な原価把握用）</span>。<br>
+      <strong>法定福利費</strong>: 項目名に「人件費・労務・給与・賞与・残業」を含む項目の合計に対して自動計算。
     </div>
     <div id="${elId}_list"></div>
     <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目 <span style="color:var(--text-xdim);font-weight:400">(候補から選択 or 自由入力)</span></label><div style="position:relative"><input class="text-input" id="${elId}_nn" placeholder="例: 燃料費・外注費 etc." list="costNamePresets" oninput="applyCostPreset('${elId}',this.value)" style="padding-right:32px"><button type="button" aria-label="クリア" title="クリアして選び直す" onclick="$('${elId}_nn').value='';$('${elId}_nn').focus()" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:1.05rem;line-height:1;padding:4px 6px;border-radius:4px">✕</button></div></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>`;
@@ -812,17 +835,96 @@ function doSave(){
   else{currentProjectId='p_'+Date.now();all.unshift({id:currentProjectId,name,memo,data,created:Date.now(),updated:Date.now()});}
   saveAll(all);localStorage.setItem(LAST_KEY,currentProjectId);$('tbName').textContent=name;closeM('saveMod');toast('保存しました：'+name);
 }
-function showListModal(){
+function populateYearKindFilters(){
   const all=loadAll();
-  $('listBody').innerHTML=all.length?all.map(p=>{
+  /* 年フィルタ */
+  const years=new Set();
+  all.forEach(p=>{const d=new Date(p.updated||p.created);if(!isNaN(d))years.add(d.getFullYear());});
+  const yearSel=$('listYear');
+  const prevY=yearSel.value;
+  yearSel.innerHTML='<option value="all">全期間</option>'+[...years].sort((a,b)=>b-a).map(y=>`<option value="${y}">${y}年</option>`).join('');
+  if(prevY&&yearSel.querySelector(`option[value="${prevY}"]`))yearSel.value=prevY;
+  /* 工種フィルタ */
+  const kinds=new Set();
+  let hasNone=false;
+  all.forEach(p=>{const wt=(p.data&&p.data.shared&&p.data.shared.workType||'').trim();if(wt)kinds.add(wt);else hasNone=true;});
+  const kindSel=$('listKind');
+  const prevK=kindSel.value;
+  kindSel.innerHTML='<option value="all">工種すべて</option>'+(hasNone?'<option value="__none">(未設定)</option>':'')+[...kinds].sort().map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join('');
+  if(prevK&&kindSel.querySelector(`option[value="${esc(prevK).replace(/"/g,'')}"]`))kindSel.value=prevK;
+}
+function renderListBody(){
+  const all=loadAll();
+  const q=($('listSearch').value||'').trim().toLowerCase();
+  const yr=$('listYear').value;
+  const kd=$('listKind').value;
+  const amtBucket=$('listAmount').value;
+  const sort=$('listSort').value;
+  let filtered=all.filter(p=>{
+    if(q){
+      const wt=(p.data&&p.data.shared&&p.data.shared.workType||'');
+      const txt=((p.name||'')+' '+(p.memo||'')+' '+wt).toLowerCase();
+      if(!txt.includes(q))return false;
+    }
+    if(yr!=='all'){
+      const d=new Date(p.updated||p.created);
+      if(d.getFullYear()!==+yr)return false;
+    }
+    if(kd!=='all'){
+      const wt=(p.data&&p.data.shared&&p.data.shared.workType||'').trim();
+      if(kd==='__none'){if(wt)return false;}
+      else if(wt!==kd)return false;
+    }
+    if(amtBucket!=='all'){
+      const a=pn((p.data&&p.data.lump&&p.data.lump.amount)||'');
+      if(amtBucket==='lt1000'&&a>=10000000)return false;
+      if(amtBucket==='1000-3000'&&(a<10000000||a>30000000))return false;
+      if(amtBucket==='gt3000'&&a<30000000)return false;
+    }
+    return true;
+  });
+  if(sort==='updated_desc')filtered.sort((a,b)=>(b.updated||b.created)-(a.updated||a.created));
+  else if(sort==='updated_asc')filtered.sort((a,b)=>(a.updated||a.created)-(b.updated||b.created));
+  else if(sort==='amount_desc')filtered.sort((a,b)=>pn((b.data&&b.data.lump&&b.data.lump.amount)||'')-pn((a.data&&a.data.lump&&a.data.lump.amount)||''));
+  else if(sort==='amount_asc')filtered.sort((a,b)=>pn((a.data&&a.data.lump&&a.data.lump.amount)||'')-pn((b.data&&b.data.lump&&b.data.lump.amount)||''));
+  else if(sort==='name')filtered.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ja'));
+  /* 統計 */
+  const total=filtered.reduce((s,p)=>s+pn((p.data&&p.data.lump&&p.data.lump.amount)||''),0);
+  $('listStats').textContent=`${filtered.length}件 / 合計 ${yen(total)}`;
+  /* 描画 */
+  $('listBody').innerHTML=filtered.length?filtered.map(p=>{
     const safeId=esc(p.id);
-    return `<div class="pli"${p.id===currentProjectId?' style="border-color:var(--accent);background:var(--accent-lo)"':''}><div class="info"><div class="pn">${esc(p.name)}</div><div class="pd">${new Date(p.updated||p.created).toLocaleDateString('ja-JP')}</div></div><div class="acts"><button class="btn" style="font-size:.7rem" onclick="loadProject('${safeId}')">読込</button><button class="btn danger" style="font-size:.7rem" onclick="delProject('${safeId}')">削除</button></div></div>`;
-  }).join(''):'<div class="lead">保存された案件はありません</div>';
-  openM('listMod');
+    const wt=((p.data&&p.data.shared&&p.data.shared.workType)||'').trim();
+    const amt=pn((p.data&&p.data.lump&&p.data.lump.amount)||'');
+    const isCur=p.id===currentProjectId;
+    const dateStr=new Date(p.updated||p.created).toLocaleDateString('ja-JP');
+    const meta=[dateStr];
+    if(wt)meta.push(esc(wt));
+    if(amt>0)meta.push(yen(amt));
+    return `<div class="pli"${isCur?' style="border-color:var(--accent);background:var(--accent-lo)"':''}><div class="info"><div class="pn">${esc(p.name)}</div><div class="pd">${meta.join(' ／ ')}</div></div><div class="acts" style="flex-wrap:wrap;gap:4px"><button class="btn" style="font-size:.7rem" onclick="loadProject('${safeId}')">読込</button><button class="btn" style="font-size:.7rem" onclick="copyProject('${safeId}')">コピー</button><button class="btn danger" style="font-size:.7rem" onclick="delProject('${safeId}')">削除</button></div></div>`;
+  }).join(''):'<div class="lead">該当する案件はありません</div>';
+}
+function showListModal(){populateYearKindFilters();renderListBody();openM('listMod');}
+function copyProject(id){
+  const all=loadAll();
+  const orig=all.find(p=>p.id===id);
+  if(!orig)return;
+  const newId='p_'+Date.now();
+  all.unshift({
+    id:newId,
+    name:((orig.name||'無題').slice(0,180))+' (コピー)',
+    memo:orig.memo||'',
+    data:JSON.parse(JSON.stringify(orig.data||{})),
+    created:Date.now(),
+    updated:Date.now()
+  });
+  saveAll(all);
+  populateYearKindFilters();renderListBody();
+  toast('コピー作成: '+(orig.name||'無題'));
 }
 function loadProject(id){const all=loadAll();const p=all.find(x=>x.id===id);if(!p)return;currentProjectId=id;localStorage.setItem(LAST_KEY,id);applyAll(p.data);const safeName=String(p.name||'').slice(0,200);$('tbName').textContent=safeName;closeM('listMod');toast('読み込み：'+safeName);}
-function delProject(id){if(!confirm('削除しますか？'))return;saveAll(loadAll().filter(p=>p.id!==id));if(currentProjectId===id)currentProjectId=null;showListModal();}
-function clearAll(){if(!confirm('全件削除しますか？'))return;saveAll([]);currentProjectId=null;$('tbName').textContent='未保存';showListModal();}
+function delProject(id){if(!confirm('削除しますか？'))return;saveAll(loadAll().filter(p=>p.id!==id));if(currentProjectId===id)currentProjectId=null;populateYearKindFilters();renderListBody();}
+function clearAll(){if(!confirm('全件削除しますか？'))return;saveAll([]);currentProjectId=null;$('tbName').textContent='未保存';populateYearKindFilters();renderListBody();}
 function newProject(){
   if(!confirm('新規案件を作成しますか？\nすべての入力値・コスト項目がクリアされます。'))return;
   currentProjectId=null;

@@ -470,8 +470,11 @@ function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme
 applyThemeIcon();
 
 /* ═══ CONSTANTS ═══ */
-const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'光熱費',amount:80000,kind:'fixed',base:'standard'},{id:5,name:'借入返済',amount:150000,kind:'fixed',base:'standard'},{id:6,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
-/* よく使うコスト項目のプリセット (大枠で20項目。細分化はカスタム入力で対応) */
+/* 初回サンプル用のデフォルトコスト (一般管理費系=借入返済・光熱費 等は除外し、現場運営に直接関わる項目のみ) */
+const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'},{id:5,name:'案件直接費',amount:0,kind:'direct',base:'standard'}];
+/* よく使うコスト項目のプリセット (現場運営に直接関わる項目のみ。
+   一般管理費=本社経費系 (家賃・光熱費・借入返済・税金・退職金引当・減価償却費・顧問料)
+   は工事原価ではなく諸経費として別計上すべきなので除外。必要なら手動入力で追加可能。) */
 const COST_PRESETS=[
   /* 変動費 (月額按分・案件規模で変わる) */
   {name:'人件費',kind:'variable',base:'standard',isLabor:true},
@@ -479,17 +482,10 @@ const COST_PRESETS=[
   {name:'高速代',kind:'variable',base:'standard'},
   {name:'産廃処分費',kind:'variable',base:'standard'},
   {name:'出張旅費',kind:'variable',base:'standard'},
-  /* 固定費 (月額按分・案件と関係なく毎月) */
-  {name:'家賃',kind:'fixed',base:'standard'},
-  {name:'光熱費',kind:'fixed',base:'standard'},
+  /* 固定費 (現場運営に関わる毎月発生する経費) */
   {name:'通信費',kind:'fixed',base:'standard'},
-  {name:'借入返済',kind:'fixed',base:'standard'},
   {name:'リース料',kind:'fixed',base:'standard'},
   {name:'保険料',kind:'fixed',base:'standard'},
-  {name:'税金',kind:'fixed',base:'standard'},
-  {name:'退職金引当',kind:'fixed',base:'standard'},
-  {name:'減価償却費',kind:'fixed',base:'standard'},
-  {name:'顧問料',kind:'fixed',base:'standard'},
   /* 直接費 (案件専用・按分なし) */
   {name:'材料費',kind:'direct',base:'standard'},
   {name:'外注費',kind:'direct',base:'standard'},
@@ -579,8 +575,8 @@ function renderCostList(elId,state,recalcFn){
     const tb=c.kind==='fixed'?'<span class="badge-pill badge-fixed">固定</span>':c.kind==='variable'?'<span class="badge-pill badge-variable">変動</span>':'<span class="badge-pill badge-direct">直接</span>';
     const id=Number(c.id)|0;
     const lab=isLaborCost(c);
-    const labBadge=lab?'<span class="badge-pill" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
-    return `<div class="cost-card" data-cost-id="${id}"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}<label style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim);cursor:pointer;margin-left:auto"><input type="checkbox" ${lab?'checked':''} onchange="updC('${elId}',${id},'isLabor',this.checked)" style="cursor:pointer">人件費として扱う</label></div></div>`;
+    const labBadge=lab?'<span class="badge-pill" title="法定福利費の自動計算対象 (項目名に人件費/労務/給与/賞与/残業 を含むと自動)" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
+    return `<div class="cost-card" data-cost-id="${id}"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}</div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}
@@ -827,7 +823,35 @@ function showListModal(){
 function loadProject(id){const all=loadAll();const p=all.find(x=>x.id===id);if(!p)return;currentProjectId=id;localStorage.setItem(LAST_KEY,id);applyAll(p.data);const safeName=String(p.name||'').slice(0,200);$('tbName').textContent=safeName;closeM('listMod');toast('読み込み：'+safeName);}
 function delProject(id){if(!confirm('削除しますか？'))return;saveAll(loadAll().filter(p=>p.id!==id));if(currentProjectId===id)currentProjectId=null;showListModal();}
 function clearAll(){if(!confirm('全件削除しますか？'))return;saveAll([]);currentProjectId=null;$('tbName').textContent='未保存';showListModal();}
-function newProject(){if(!confirm('新規案件を作成しますか？'))return;currentProjectId=null;LS={taxType:'excl',profMode:'amt',siRate:16.5,costs:JSON.parse(JSON.stringify(DEF_COSTS)),nextId:7};SS={workType:'',rate:1.0,siRate:16.5,costs:JSON.parse(JSON.stringify(DEF_COSTS)),nextId:7};applyAll({lump:{},shared:{}});$('tbName').textContent='未保存';toast('新規作成');}
+function newProject(){
+  if(!confirm('新規案件を作成しますか？\nすべての入力値・コスト項目がクリアされます。'))return;
+  currentProjectId=null;
+  /* state を空に */
+  LS={taxType:'excl',profMode:'amt',siRate:16.5,costs:[],nextId:1};
+  SS={workType:'',rate:1.0,siRate:16.5,costs:[],nextId:1};
+  /* 入力欄を空に */
+  ['L_name','L_amount','L_profA','L_profR','S_workType','N_cur','N_prop','I_pr','S_extra','L_pM','L_dM','S_workers','S_pDays','S_stdDays','S_actDays','S_m'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  /* スライダー・表示を最小値か '—' に */
+  $('L_taxD').textContent='10%';$('L_tax').value=10;
+  $('L_pD').textContent='—';$('L_pS').value=1;
+  $('L_dD').textContent='—';$('L_dS').value=1;
+  $('L_refD').textContent='¥35,000';$('L_ref').value=35000;
+  $('S_rateD').textContent='×1.0';$('S_rateS').value=1.0;$('S_rateNum').value=1.0;
+  $('S_mD').textContent='20%';$('S_mS').value=20;$('S_m').value=20;
+  $('N_curD').textContent='¥40,000';$('N_curS').value=40000;$('N_cur').value=40000;
+  $('N_propD').textContent='¥60,000';$('N_propS').value=60000;$('N_prop').value=60000;
+  $('I_prD').textContent='¥45,000';$('I_prS').value=45000;$('I_pr').value=45000;
+  /* トグルをデフォルトに */
+  $('L_taxTg')?.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  $('L_profTg')?.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===0));
+  $('L_profA').style.display='';$('L_profR').style.display='none';
+  /* コストカード再描画 (空のリスト) */
+  renderCostCard('L_costCard',LS,'calcL()');
+  renderCostCard('S_costCard',SS,'calcN();calcI()');
+  $('tbName').textContent='未保存';
+  calcL();calcN();calcI();
+  toast('新規作成 (空状態)');
+}
 
 /* ═══ PDF ═══ */
 function exportPDF(){

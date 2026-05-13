@@ -476,7 +476,20 @@ function calcCosts(costs,siRate,pDays,sDays,aDays){
   let labM=0;costs.forEach(c=>{if(isLaborCost(c))labM+=c.amount;});
   const siA=Math.round(labM*(siRate/100));
   const eff=[...costs];if(siRate>0)eff.push({id:'_si',name:'法定福利費（自動）',amount:siA,kind:'variable',base:'standard',auto:true});
-  eff.forEach(c=>{let a=0,n='';if(c.kind==='direct'){a=c.amount;n='直接費';direct+=a;}else{const bd=(c.base==='actual'?aDays:sDays)||1;a=c.amount/bd*pDays;n=c.auto?`人件費${yen(labM)}×${siRate}%÷${bd}×${pDays}日`:`${yen(Math.round(c.amount/bd))}×${pDays}日`;if(c.kind==='fixed')fixed+=a;else variable+=a;}total+=a;rows.push({name:c.name,allocated:a,note:n,auto:c.auto});});
+  eff.forEach(c=>{
+    let a=0,n='';
+    if(c.kind==='direct'){a=c.amount;n='直接費（按分なし）';direct+=a;}
+    else{
+      const bd=(c.base==='actual'?aDays:sDays)||1;
+      a=c.amount/bd*pDays;
+      n=c.auto
+        ?`(対象人件費${yen(labM)}×${siRate}%) ÷ ${bd}日 × ${pDays}日`
+        :`月額${yen(c.amount)} ÷ ${bd}日 × ${pDays}日`;
+      if(c.kind==='fixed')fixed+=a;else variable+=a;
+    }
+    total+=a;
+    rows.push({name:c.name,allocated:a,note:n,auto:c.auto});
+  });
   rows.push({name:'合計',allocated:total,note:'',current:true});
   return{rows,total,fixed,variable,direct};
 }
@@ -488,6 +501,12 @@ function renderCostCard(elId,state,recalcFn){
   $(elId).innerHTML=`<div class="card-title"><span class="badge">法定福利費</span><span class="badge warn">自動連動</span></div>
     <div class="field"><label class="field-label">法定福利費率 <span class="slider-current" id="${elId}_siD">${state.siRate}%</span></label><div class="slider-wrap"><input type="range" min="0" max="30" step="0.1" value="${state.siRate}" id="${elId}_siS" oninput="this.nextElementSibling.value=this.value;$('${elId}_siD').textContent=this.value+'%';${state===LS?'LS':'SS'}.siRate=parseFloat(this.value);${recalcFn}"><input type="number" class="num-input" style="width:80px;flex:none" id="${elId}_siR" value="${state.siRate}" step="0.1" oninput="this.previousElementSibling.value=this.value;$('${elId}_siD').textContent=this.value+'%';${state===LS?'LS':'SS'}.siRate=parseFloat(this.value);${recalcFn}"></div><div class="field-help">健保・厚生年金・雇用保険・労災等</div></div>
     <div class="card-title" style="margin-top:16px"><span class="badge warn">コスト入力</span></div>
+    <div class="field-help" style="margin-bottom:10px;line-height:1.6">
+      <strong style="color:var(--text)">按分方式</strong>:
+      月額（会社全体のコスト）÷ 標準稼働日数 × 案件実稼働日数 で配賦。<br>
+      区分: <strong>変動/固定</strong>=月額按分・<strong>直接</strong>=案件直接費（按分なし）。<br>
+      法定福利費は「人件費として扱う」項目の合計に対して自動計算されます。
+    </div>
     <div id="${elId}_list"></div>
     <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目</label><input class="text-input" id="${elId}_nn" placeholder="通信費"></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>`;
   renderCostList(elId,state,recalcFn);
@@ -499,7 +518,7 @@ function renderCostList(elId,state,recalcFn){
     const id=Number(c.id)|0;
     const lab=isLaborCost(c);
     const labBadge=lab?'<span class="badge-pill" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
-    return `<div class="cost-card"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" onchange="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}<label style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim);cursor:pointer;margin-left:auto"><input type="checkbox" ${lab?'checked':''} onchange="updC('${elId}',${id},'isLabor',this.checked)" style="cursor:pointer">人件費として扱う</label></div></div>`;
+    return `<div class="cost-card" data-cost-id="${id}"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}${labBadge}<label style="display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--text-dim);cursor:pointer;margin-left:auto"><input type="checkbox" ${lab?'checked':''} onchange="updC('${elId}',${id},'isLabor',this.checked)" style="cursor:pointer">人件費として扱う</label></div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}
@@ -523,17 +542,31 @@ function addCostTo(elId){
   const validBases=['standard','actual'];
   const rawKind=$(elId+'_nk').value;
   const rawBase=$(elId+'_nb').value;
+  const rawName=String($(elId+'_nn').value||'').slice(0,100).trim();
+  const newId=s.nextId++;
   s.costs.push({
-    id:s.nextId++,
-    name:String($(elId+'_nn').value||'').slice(0,100).trim()||'新規',
+    id:newId,
+    name:rawName||'新規項目（要編集）',
     amount:Number($(elId+'_na').value)||0,
     kind:validKinds.includes(rawKind)?rawKind:'variable',
     base:validBases.includes(rawBase)?rawBase:'standard',
   });
   $(elId+'_nn').value='';
   $(elId+'_na').value='';
+  $(elId+'_nk').value='variable';
+  $(elId+'_nb').value='standard';
   renderCostList(elId,s,getRecalcFor(elId));
   recalcOf(elId)();
+  /* 追加した項目までスクロール + フラッシュ強調 */
+  const added=document.querySelector(`#${elId}_list .cost-card[data-cost-id="${newId}"]`);
+  if(added){
+    added.scrollIntoView({behavior:'smooth',block:'center'});
+    added.style.transition='outline-color .3s, box-shadow .3s';
+    added.style.outline='2px solid var(--accent)';
+    added.style.boxShadow='0 0 12px var(--accent-md)';
+    setTimeout(()=>{added.style.outline='';added.style.boxShadow='';},1600);
+  }
+  toast('追加: '+(rawName||'新規項目'));
 }
 
 /* ═══════════════════════════ */

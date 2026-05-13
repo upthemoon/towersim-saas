@@ -448,6 +448,8 @@ function clamp(n,lo,hi){const v=+n;if(!isFinite(v))return lo;return Math.min(Mat
 /* eval を廃止: 再計算は関数参照で */
 const RECALC={
   L_costCard:()=>calcL(),
+  S_costCard:()=>{calcN();calcI();},
+  /* legacy alias (将来の id 変更に備えて残す) */
   N_costCard:()=>{calcN();calcI();},
   I_costCard:()=>{calcN();calcI();},
 };

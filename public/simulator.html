@@ -210,6 +210,20 @@ tr.current{background:var(--accent-lo)}
 .td-green{color:var(--green)}.td-red{color:var(--red)}
 .memo-box,.proposal-box{white-space:pre-wrap;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:.86rem;line-height:1.8}
 .formula-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-top:10px;font-family:var(--mono);font-size:.82rem;line-height:1.8}.formula-box strong{color:var(--accent)}
+/* 単価階層分解 (Waterfall) */
+.waterfall{display:flex;flex-direction:column;gap:4px}
+.waterfall .wf-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:baseline;padding:8px 12px;border-radius:8px;font-size:.86rem}
+.waterfall .wf-row.step{background:var(--bg2);border:1px solid var(--border)}
+.waterfall .wf-row.subtotal{background:var(--accent-lo);border:1px solid var(--accent-md);font-weight:700}
+.waterfall .wf-row.subtotal.be{background:var(--amber-lo);border-color:var(--amber-border)}
+.waterfall .wf-row.subtotal.need{background:var(--green-lo);border-color:var(--green-border)}
+.waterfall .wf-label{color:var(--text-dim)}
+.waterfall .wf-row.subtotal .wf-label{color:var(--text)}
+.waterfall .wf-delta{color:var(--text-xdim);font-family:var(--mono);font-size:.78rem;text-align:right;white-space:nowrap}
+.waterfall .wf-amount{color:var(--text);font-family:var(--mono);font-weight:700;text-align:right;white-space:nowrap}
+.waterfall .wf-row.subtotal .wf-amount{color:var(--accent);font-size:1rem}
+.waterfall .wf-row.subtotal.be .wf-amount{color:var(--amber)}
+.waterfall .wf-row.subtotal.need .wf-amount{color:var(--green)}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex}
@@ -387,6 +401,7 @@ tr.current{background:var(--accent-lo)}
       <div class="field"><label class="field-label">導入人数 <span class="slider-current" id="L_pD">5人</span></label><div class="slider-wrap"><input type="range" min="1" max="30" value="5" id="L_pS" oninput="$('L_pD').textContent=this.value+'人';$('L_pM').value=this.value;calcL()"><input type="number" class="num-input" id="L_pM" value="5" min="1" max="999" style="width:80px;flex:none" oninput="$('L_pS').value=Math.min(+this.value||1,30);$('L_pD').textContent=(this.value||0)+'人';calcL()" onblur="this.value=clamp(this.value||5,1,999);$('L_pS').value=Math.min(+this.value,30);$('L_pD').textContent=this.value+'人';calcL()"></div><div class="field-help">バー: 1〜30人 / 直接入力で最大999</div></div>
       <div class="field"><label class="field-label">実稼働日数 <span class="slider-current" id="L_dD">20日</span></label><div class="slider-wrap"><input type="range" min="1" max="120" value="20" id="L_dS" oninput="$('L_dD').textContent=this.value+'日';$('L_dM').value=this.value;calcL()"><input type="number" class="num-input" id="L_dM" value="20" min="1" max="365" style="width:80px;flex:none" oninput="$('L_dS').value=Math.min(+this.value||1,120);$('L_dD').textContent=(this.value||0)+'日';calcL()" onblur="this.value=clamp(this.value||20,1,365);$('L_dS').value=Math.min(+this.value,120);$('L_dD').textContent=this.value+'日';calcL()"></div><div class="field-help">バー: 1〜120日 / 直接入力で最大365</div></div>
     </div>
+    <div class="field"><label class="field-label">標準稼働日数 (月の平均稼働日数)</label><input type="number" class="num-input" id="L_sDays" value="20" min="1" max="31" oninput="calcL()" onblur="this.value=clamp(this.value||20,1,31);calcL()" style="width:120px;flex:none"><div class="field-help">月額コストを案件日数に按分する基準。一般的には 20〜22日</div></div>
   </div>
   <div class="card" id="L_costCard"></div>
   <div class="card"><div class="card-title"><span class="badge">利益目標・参考単価</span></div>
@@ -400,7 +415,7 @@ tr.current{background:var(--accent-lo)}
     <div><div style="font-size:.66rem;color:var(--text-xdim);margin-bottom:5px">充足率（要望=100%）</div><div class="gauge-track"><div class="gauge-fill gg" id="L_gauge" style="width:0%">0%</div></div><div class="gauge-labels"><span>0%</span><span>50%</span><span>100%</span><span>120%</span></div></div>
   </div>
   <div id="L_alert"></div>
-  <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価</span><span class="kpi-value" id="L_oU">---</span></div></div></div>
+  <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価 (余剰/人工)</span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
   <div class="card"><div class="card-title"><span class="badge">コスト内訳</span></div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分後</th><th>算式</th></tr></thead><tbody id="L_cb"></tbody></table></div></div>
   <div class="card"><div class="card-title"><span class="badge">交渉メモ</span></div><div class="memo-box" id="L_memo">入力後に自動生成</div></div>
 </div>
@@ -468,9 +483,10 @@ tr.current{background:var(--accent-lo)}
 </div>
 <div class="col">
   <div class="hero-grid"><div class="hero-box" id="N_hA"><div class="hero-label">交渉判定</div><div class="hero-value" id="N_hAV">—</div><div class="hero-sub" id="N_hAS">—</div></div><div class="hero-box warn-box"><div class="hero-label">提案着地単価</div><div class="hero-value" id="N_hBV">—</div><div class="hero-sub" id="N_hBS">—</div></div></div>
-  <div class="kpi-grid"><div class="kpi"><span class="kpi-label">案件売上</span><span class="kpi-value blue" id="N_kR">—</span></div><div class="kpi"><span class="kpi-label">案件総コスト</span><span class="kpi-value orange" id="N_kC">—</span></div><div class="kpi"><span class="kpi-label">必要人工単価</span><span class="kpi-value amber" id="N_kN">—</span></div><div class="kpi"><span class="kpi-label">差額</span><span class="kpi-value" id="N_kG">—</span></div><div class="kpi wide"><span class="kpi-label">現在提示の利益</span><span class="kpi-value lg" id="N_kP">—</span></div></div>
+  <div class="kpi-grid"><div class="kpi"><span class="kpi-label">案件売上</span><span class="kpi-value blue" id="N_kR">—</span></div><div class="kpi"><span class="kpi-label">案件総コスト</span><span class="kpi-value orange" id="N_kC">—</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="N_kBE">—</span></div><div class="kpi"><span class="kpi-label">必要人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="N_kN">—</span></div><div class="kpi"><span class="kpi-label">差額 (現在−必要)</span><span class="kpi-value" id="N_kG">—</span></div><div class="kpi wide"><span class="kpi-label">現在提示の利益</span><span class="kpi-value lg" id="N_kP">—</span></div></div>
   <div class="card"><div class="card-title">要点</div><div id="N_sum" class="summary-box"><div class="head">—</div></div><div class="info-list" style="margin-top:12px"><div class="info-chip"><div class="t">固定費</div><div class="v" id="N_iF">—</div></div><div class="info-chip"><div class="t">変動費</div><div class="v" id="N_iV">—</div></div><div class="info-chip"><div class="t">直接費</div><div class="v" id="N_iD">—</div></div><div class="info-chip"><div class="t">利益率</div><div class="v" id="N_iM">—</div></div></div></div>
   <div class="card"><div class="card-title">提案文</div><div class="proposal-box" id="N_prop_text"></div></div>
+  <div class="card"><div class="card-title">単価の階層分解 <span class="badge">1人工あたりの内訳</span></div><div id="N_waterfall" class="waterfall"></div></div>
   <div class="card"><div class="card-title">コスト内訳</div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分額</th><th>算式</th></tr></thead><tbody id="N_cb"></tbody></table></div></div>
   <div class="card"><div class="card-title">単価感度</div><div class="table-wrap"><table><thead><tr><th>単価</th><th>売上</th><th>利益</th><th>利益率</th></tr></thead><tbody id="N_sens"></tbody></table></div></div>
 </div>
@@ -489,7 +505,7 @@ tr.current{background:var(--accent-lo)}
 </div>
 <div class="col">
   <div class="hero-grid"><div class="hero-box" id="I_hA"><div class="hero-label">社内判定</div><div class="hero-value" id="I_hAV">—</div><div class="hero-sub" id="I_hAS">—</div></div><div class="hero-box warn-box"><div class="hero-label">必要人工単価</div><div class="hero-value" id="I_hBV">—</div><div class="hero-sub" id="I_hBS">—</div></div></div>
-  <div class="kpi-grid"><div class="kpi"><span class="kpi-label">案件売上</span><span class="kpi-value blue" id="I_kR">—</span></div><div class="kpi"><span class="kpi-label">案件総コスト</span><span class="kpi-value orange" id="I_kC">—</span></div><div class="kpi"><span class="kpi-label">必要人工単価</span><span class="kpi-value amber" id="I_kN">—</span></div><div class="kpi"><span class="kpi-label">差額</span><span class="kpi-value" id="I_kG">—</span></div><div class="kpi wide"><span class="kpi-label">案件利益（社内基準）</span><span class="kpi-value lg" id="I_kP">—</span></div></div>
+  <div class="kpi-grid"><div class="kpi"><span class="kpi-label">案件売上</span><span class="kpi-value blue" id="I_kR">—</span></div><div class="kpi"><span class="kpi-label">案件総コスト</span><span class="kpi-value orange" id="I_kC">—</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="I_kBE">—</span></div><div class="kpi"><span class="kpi-label">必要人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="I_kN">—</span></div><div class="kpi"><span class="kpi-label">差額 (現在−必要)</span><span class="kpi-value" id="I_kG">—</span></div><div class="kpi wide"><span class="kpi-label">案件利益（社内基準）</span><span class="kpi-value lg" id="I_kP">—</span></div></div>
   <div class="card"><div class="card-title">要点</div><div id="I_sum" class="summary-box"><div class="head">—</div></div><div class="info-list" style="margin-top:12px"><div class="info-chip"><div class="t">固定費</div><div class="v" id="I_iF">—</div></div><div class="info-chip"><div class="t">変動費</div><div class="v" id="I_iV">—</div></div><div class="info-chip"><div class="t">直接費</div><div class="v" id="I_iD">—</div></div><div class="info-chip"><div class="t">利益率</div><div class="v" id="I_iM">—</div></div></div></div>
   <div class="card"><div class="card-title">社内判断メモ</div><div class="memo-box" id="I_memo"></div></div>
   <div class="card"><div class="card-title">コスト内訳</div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分額</th><th>算式</th></tr></thead><tbody id="I_cb"></tbody></table></div></div>
@@ -642,7 +658,7 @@ function syncShared(){/* noop */}
 
 /* ═══ COST ENGINE ═══ */
 function calcCosts(costs,siRate,pDays,sDays,aDays){
-  const rows=[];let total=0,fixed=0,variable=0,direct=0;
+  const rows=[];let total=0,fixed=0,variable=0,direct=0,labor=0,si=0;
   let labM=0;costs.forEach(c=>{if(isLaborCost(c))labM+=c.amount;});
   const siA=Math.round(labM*(siRate/100));
   const eff=[...costs];if(siRate>0)eff.push({id:'_si',name:'法定福利費（自動）',amount:siA,kind:'variable',base:'standard',auto:true});
@@ -657,11 +673,15 @@ function calcCosts(costs,siRate,pDays,sDays,aDays){
         :`月額${yen(c.amount)} ÷ ${bd}日 × ${pDays}日`;
       if(c.kind==='fixed')fixed+=a;else variable+=a;
     }
+    if(c.auto)si+=a;
+    else if(isLaborCost(c))labor+=a;
     total+=a;
     rows.push({name:c.name,allocated:a,note:n,auto:c.auto});
   });
   rows.push({name:'合計',allocated:total,note:'',current:true});
-  return{rows,total,fixed,variable,direct};
+  /* other = 人件費でも法定福利費でも直接費でもないコスト (≒ 共通仮設費・諸経費) */
+  const other=total-labor-si-direct;
+  return{rows,total,fixed,variable,direct,labor,si,other};
 }
 function renderBreakdown(id,rows){$(id).innerHTML=rows.map(r=>`<tr${r.current?' class="current"':''}${r.auto?' style="color:var(--accent);font-style:italic"':''}><td>${esc(r.name)}${r.auto?'<span class="auto-calc-badge">自動</span>':''}</td><td>${yen(Math.round(r.allocated))}</td><td>${esc(r.note)}</td></tr>`).join('');}
 function drawSum(id,cls,lines){const e=$(id);e.className='summary-box '+cls;e.innerHTML='<div class="head">'+lines[0]+'</div>'+lines.slice(1).map(x=>'<div class="line">'+x+'</div>').join('');}
@@ -751,12 +771,20 @@ function addCostTo(elId){
 function calcL(){
   const raw=pn($('L_amount').value),tr=+$('L_tax').value/100;
   const pp=+($('L_pM').value)||0,dd=+($('L_dM').value)||0,rp=+$('L_ref').value;
+  const sDays=+($('L_sDays')?.value)||20;
   const rev=LS.taxType==='incl'?Math.round(raw/(1+tr)):raw;
-  const cd=calcCosts(LS.costs,LS.siRate,dd,20,20);
+  const cd=calcCosts(LS.costs,LS.siRate,dd,sDays,sDays);
   let tp=0;if(LS.profMode==='amt')tp=pn($('L_profA').value);else tp=Math.round(rev*(parseFloat($('L_profR').value)||0)/100);
   const lab=rev-cd.total-tp,md=pp*dd,up=md>0?lab/md:0;
   const diff=up-rp,dr=rp>0?diff/rp*100:0,td=diff*md;
   const req=md*rp+cd.total+tp,sh=req-rev,fill=rp>0?up/rp*100:0;
+  /* 必要単価 = (コスト + 目標利益) / 総人工 — 目標利益を確保するのに必要な 1 人工単価 */
+  const needUnitP=md>0?(cd.total+tp)/md:0;
+  /* 必要売上 = コスト + 目標利益 */
+  const needRev=cd.total+tp;
+  /* 損益分岐 (利益 0 で釣り合う単価・売上) */
+  const beUnitP=md>0?cd.total/md:0;
+  const beRev=cd.total;
   const ok=raw>0;
 
   $('L_cR').textContent=yen(rp)+'/人工';$('L_cA').textContent=ok&&md>0?yen(Math.round(up))+'/人工':'---';$('L_cA').className='cmp-v big '+(diff>=0?'green':dr>=-10?'amber':'red');
@@ -769,6 +797,10 @@ function calcL(){
   $('L_alert').innerHTML=ah;
 
   $('L_oR').textContent=yen(rev);$('L_oC').textContent=yen(Math.round(cd.total));$('L_oP').textContent=yen(tp);$('L_oL').textContent=yen(lab);$('L_oL').className='kpi-value '+(lab<0?'red':'green');$('L_oM').textContent=md>0?fm(md)+' 人工':'---';$('L_oU').textContent=ok&&md>0?yen(Math.round(up)):'---';$('L_oU').className='kpi-value '+(diff>=0?'green':dr>=-10?'amber':'red');
+  $('L_oNeed').textContent=md>0?yen(Math.round(needUnitP)):'---';
+  $('L_oReq').textContent=yen(Math.round(needRev));
+  $('L_oBE').textContent=md>0?yen(Math.round(beUnitP)):'---';
+  $('L_oBER').textContent=yen(Math.round(beRev));
   renderBreakdown('L_cb',cd.rows);
 
   if(!ok||md<=0){$('L_memo').textContent='入力後に自動生成';return;}
@@ -799,6 +831,8 @@ function calcN(){
   /* 必要人工単価: 売上 >= tc/(1-tm) を満たす最小単価。%モードでは諸経費率込みで計算 */
   const tgtR=tc/Math.max(1-tm,.0001);
   const needP=valid?(extraRevMode==='pct'?tgtR/(w*pd*rate*(1+extraRevPct)):Math.max(0,(tgtR-extraRevAmt)/(w*pd*rate))):0;
+  /* 損益分岐単価: 利益 0 で釣り合う単価 (= コスト / 人工 (実費請求あれば差し引く)) */
+  const breakEvenP=valid?(extraRevMode==='pct'?tc/(w*pd*rate*(1+extraRevPct)):Math.max(0,(tc-extraRevAmt)/(w*pd*rate))):0;
   const gap=needP-curP;
   /* 表示用 (現在単価ベースの実費請求額) */
   const extraRev=extraRev_cur;
@@ -815,17 +849,40 @@ function calcN(){
 
   if(!valid){
     $('N_formula').textContent='投入人数と稼働日数を入力してください';
-    ['N_kR','N_kC','N_kN','N_kG','N_kP','N_iF','N_iV','N_iD','N_iM','N_hAV','N_hAS','N_hBV','N_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
+    ['N_kR','N_kC','N_kBE','N_kN','N_kG','N_kP','N_iF','N_iV','N_iD','N_iM','N_hAV','N_hAS','N_hBV','N_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
     $('N_sum').innerHTML='<div class="head">入力待ち</div><div class="line">投入人数と稼働日数を入力すると計算が始まります。</div>';
     $('N_prop_text').textContent='入力後に自動生成';
     $('N_sens').innerHTML='';
+    if($('N_waterfall'))$('N_waterfall').innerHTML='<div style="padding:14px;color:var(--text-dim);font-size:.85rem">投入人数と稼働日数を入力すると単価分解が表示されます</div>';
     renderBreakdown('N_cb',cd.rows);
     return;
   }
 
   const extraTxt=extraRev>0?`<br><span style="color:var(--text-dim)">実費請求：</span><strong>+${yen(extraRev)}</strong>`:'';
   $('N_formula').innerHTML=`<span style="color:var(--text-dim)">元請：</span>${yen(curP)}×${rate}×${w}人×${pd}日＝<strong>${yen(laborR_cur)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong>${yen(curR)}</strong>`:''}<br><span style="color:var(--text-dim)">提案：</span>${yen(propP)}×${rate}×${w}人×${pd}日＝<strong style="color:var(--green)">${yen(laborR_prop)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong style="color:var(--green)">${yen(propR)}</strong>`:''}`;
-  $('N_kR').textContent=yen(curR);$('N_kC').textContent=yen(tc);$('N_kN').textContent=yen(needP);$('N_kG').textContent=yen(gap);$('N_kG').className='kpi-value '+(gap>0?'red':'green');$('N_kP').textContent=yen(curPr);$('N_kP').className='kpi-value lg '+(curPr>=0?'green':'red');
+  $('N_kR').textContent=yen(curR);$('N_kC').textContent=yen(tc);$('N_kBE').textContent=yen(breakEvenP);$('N_kN').textContent=yen(needP);$('N_kG').textContent=yen(gap);$('N_kG').className='kpi-value '+(gap>0?'red':'green');$('N_kP').textContent=yen(curPr);$('N_kP').className='kpi-value lg '+(curPr>=0?'green':'red');
+  /* 単価階層分解 (1人工あたり) */
+  if(valid&&w*pd>0){
+    const md=w*pd*rate;
+    const laborPerU=cd.labor/md, siPerU=cd.si/md, otherPerU=(cd.other+cd.direct)/md;
+    const subAfterSi=laborPerU+siPerU, subBE=subAfterSi+otherPerU;
+    const profitPerU=needP-subBE;
+    $('N_waterfall').innerHTML=`
+      <div class="wf-row step"><span class="wf-label">給与 (人件費按分/人工)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(laborPerU))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 法定福利費</span><span class="wf-delta">+${yen(Math.round(siPerU))}</span><span class="wf-amount">${yen(Math.round(subAfterSi))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 諸経費 (変動・固定・直接)</span><span class="wf-delta">+${yen(Math.round(otherPerU))}</span><span class="wf-amount">${yen(Math.round(subBE))}</span></div>
+      <div class="wf-row subtotal be"><span class="wf-label">＝ 損益分岐単価 (利益0)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(subBE))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 目標利益 ${(tm*100).toFixed(0)}%</span><span class="wf-delta">+${yen(Math.round(profitPerU))}</span><span class="wf-amount">${yen(Math.round(needP))}</span></div>
+      <div class="wf-row subtotal need"><span class="wf-label">＝ 必要単価 (目標利益確保)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(needP))}</span></div>
+      <div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--bg2);font-size:.75rem;color:var(--text-dim);line-height:1.6">
+        現在提示 ${yen(curP)} / 必要単価 ${yen(Math.round(needP))} → ${gap>0?`<strong style="color:var(--red)">${yen(gap)} 不足</strong>`:`<strong style="color:var(--green)">${yen(-gap)} 余裕</strong>`}<br>
+        ${extraRevMode==='pct'&&extraRevPct>0?`<span>諸経費率 ${(extraRevPct*100).toFixed(1)}% 上乗せ込み</span>`:''}
+        ${extraRevMode==='amt'&&extraRevAmt>0?`<span>実費請求 ${yen(extraRevAmt)} 込み</span>`:''}
+      </div>
+    `;
+  }else{
+    $('N_waterfall').innerHTML='<div style="padding:14px;color:var(--text-dim);font-size:.85rem">投入人数と稼働日数を入力すると単価分解が表示されます</div>';
+  }
   $('N_hAV').textContent=gap>0?'引き上げ提案が必要':'現行でも成立';$('N_hAS').textContent=gap>0?`差額${yen(gap)}`:`利益${yen(curPr)}`;$('N_hA').className='hero-box '+(gap>0?'bad':'good');
   $('N_hBV').textContent=yen(propP);$('N_hBS').textContent=`利益${yen(propPr)}（${pct(propM)}）`;
   $('N_iF').textContent=yen(Math.round(cd.fixed));$('N_iV').textContent=yen(Math.round(cd.variable));$('N_iD').textContent=yen(Math.round(cd.direct));$('N_iM').textContent=pct(curM);
@@ -873,10 +930,11 @@ function calcI(){
   const cd=calcCosts(SS.costs,SS.siRate,pd,sd,ad),tc=cd.total+extra;
   const prof=rev-tc,marg=rev>0?prof/rev:0;
   const tgtR=tc/Math.max(1-tm,.0001),needP=valid?(extraRevMode==='pct'?tgtR/(w*pd*rate*(1+extraRevPct)):Math.max(0,(tgtR-extraRevAmt)/(w*pd*rate))):0,gap=needP-price;
+  const breakEvenP=valid?(extraRevMode==='pct'?tc/(w*pd*rate*(1+extraRevPct)):Math.max(0,(tc-extraRevAmt)/(w*pd*rate))):0;
 
   if(!valid){
     $('I_formula').textContent='投入人数と稼働日数を入力してください';
-    ['I_kR','I_kC','I_kN','I_kG','I_kP','I_iF','I_iV','I_iD','I_iM','I_hAV','I_hAS','I_hBV','I_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
+    ['I_kR','I_kC','I_kBE','I_kN','I_kG','I_kP','I_iF','I_iV','I_iD','I_iM','I_hAV','I_hAS','I_hBV','I_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
     $('I_sum').innerHTML='<div class="head">入力待ち</div><div class="line">投入人数と稼働日数を入力すると計算が始まります。</div>';
     $('I_memo').textContent='入力後に自動生成';
     $('I_sens').innerHTML='';
@@ -885,7 +943,7 @@ function calcI(){
   }
 
   $('I_formula').innerHTML=`売上 ＝ ${yen(price)}×${rate}×${w}人×${pd}日 ＝ <strong>${yen(laborR)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong style="color:var(--accent)">${yen(rev)}</strong>`:''}`;
-  $('I_kR').textContent=yen(rev);$('I_kC').textContent=yen(tc);$('I_kN').textContent=yen(needP);$('I_kG').textContent=yen(gap);$('I_kG').className='kpi-value '+(gap>0?'red':'green');$('I_kP').textContent=yen(prof);$('I_kP').className='kpi-value lg '+(prof>=0?'green':'red');
+  $('I_kR').textContent=yen(rev);$('I_kC').textContent=yen(tc);$('I_kBE').textContent=yen(breakEvenP);$('I_kN').textContent=yen(needP);$('I_kG').textContent=yen(gap);$('I_kG').className='kpi-value '+(gap>0?'red':'green');$('I_kP').textContent=yen(prof);$('I_kP').className='kpi-value lg '+(prof>=0?'green':'red');
   $('I_hAV').textContent=prof>=0?'受注検討可':'条件見直し';$('I_hAS').textContent=prof>=0?`利益${yen(prof)}`:`不足${yen(-prof)}`;$('I_hA').className='hero-box '+(prof>=0?'good':'bad');
   $('I_hBV').textContent=yen(needP);$('I_hBS').textContent=`目標${(tm*100).toFixed(0)}%基準`;
   $('I_iF').textContent=yen(Math.round(cd.fixed));$('I_iV').textContent=yen(Math.round(cd.variable));$('I_iD').textContent=yen(Math.round(cd.direct));$('I_iM').textContent=pct(marg);
@@ -920,7 +978,7 @@ function saveAll(a){localStorage.setItem(STORAGE,JSON.stringify(a));}
 function gatherAll(){
   return{
     lump:{taxType:LS.taxType,profMode:LS.profMode,siRate:LS.siRate,costs:JSON.parse(JSON.stringify(LS.costs)),nextId:LS.nextId,
-      amount:$('L_amount').value,tax:$('L_tax').value,people:$('L_pM').value,days:$('L_dM').value,profA:$('L_profA').value,profR:$('L_profR').value,ref:$('L_ref').value,name:$('L_name').value},
+      amount:$('L_amount').value,tax:$('L_tax').value,people:$('L_pM').value,days:$('L_dM').value,sDays:$('L_sDays')?.value||'20',profA:$('L_profA').value,profR:$('L_profR').value,ref:$('L_ref').value,name:$('L_name').value},
     shared:{workType:SS.workType,rate:SS.rate,siRate:SS.siRate,costs:JSON.parse(JSON.stringify(SS.costs)),nextId:SS.nextId,
       workers:$('S_workers').value,pDays:$('S_pDays').value,stdDays:$('S_stdDays').value,actDays:$('S_actDays').value,margin:$('S_m').value,extra:$('S_extra').value,extraRev:$('S_extraRev')?.value||'0',extraRevPct:$('S_extraRevPct')?.value||'0',extraRevMode:SS.extraRevMode||'amt',taxR:$('S_taxR')?.value||'10',
       curPrice:$('N_cur').value,propPrice:$('N_prop').value,intPrice:$('I_pr').value}
@@ -928,7 +986,7 @@ function gatherAll(){
 }
 function applyAll(d){
   if(d.lump){const l=d.lump;LS.taxType=l.taxType||'excl';LS.profMode=l.profMode||'amt';LS.siRate=l.siRate??16.5;LS.costs=l.costs||JSON.parse(JSON.stringify(DEF_COSTS));LS.nextId=l.nextId||7;
-    $('L_amount').value=l.amount||'';$('L_tax').value=l.tax||10;$('L_taxD').textContent=(l.tax||10)+'%';$('L_pM').value=l.people||5;$('L_pS').value=Math.min(l.people||5,30);$('L_pD').textContent=(l.people||5)+'人';$('L_dM').value=l.days||20;$('L_dS').value=Math.min(l.days||20,120);$('L_dD').textContent=(l.days||20)+'日';$('L_profA').value=l.profA||'';$('L_profR').value=l.profR||'';$('L_ref').value=l.ref||35000;$('L_refD').textContent=yen(+(l.ref||35000));$('L_name').value=l.name||'';
+    $('L_amount').value=l.amount||'';$('L_tax').value=l.tax||10;$('L_taxD').textContent=(l.tax||10)+'%';$('L_pM').value=l.people||5;$('L_pS').value=Math.min(l.people||5,30);$('L_pD').textContent=(l.people||5)+'人';$('L_dM').value=l.days||20;$('L_dS').value=Math.min(l.days||20,120);$('L_dD').textContent=(l.days||20)+'日';if($('L_sDays'))$('L_sDays').value=l.sDays||20;$('L_profA').value=l.profA||'';$('L_profR').value=l.profR||'';$('L_ref').value=l.ref||35000;$('L_refD').textContent=yen(+(l.ref||35000));$('L_name').value=l.name||'';
     $('L_profA').style.display=LS.profMode==='amt'?'':'none';$('L_profR').style.display=LS.profMode==='rate'?'':'none';
     $('L_taxTg').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===(LS.taxType==='excl'?0:1)));
     $('L_profTg').querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===(LS.profMode==='amt'?0:1)));
@@ -1059,7 +1117,8 @@ function newProject(){
   LS={taxType:'excl',profMode:'amt',siRate:16.5,costs:[],nextId:1};
   SS={workType:'',rate:1.0,siRate:16.5,costs:[],nextId:1};
   /* 入力欄を空に */
-  ['L_name','L_amount','L_profA','L_profR','S_workType','N_cur','N_prop','I_pr','S_extra','S_extraRev','S_extraRevPct','L_pM','L_dM','S_workers','S_pDays','S_stdDays','S_actDays','S_m'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  ['L_name','L_amount','L_profA','L_profR','S_workType','N_cur','N_prop','I_pr','S_extra','S_extraRev','S_extraRevPct','L_pM','L_dM','L_sDays','S_workers','S_pDays','S_stdDays','S_actDays','S_m'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  if($('L_sDays'))$('L_sDays').value='20';
   if($('S_taxR'))$('S_taxR').value='10';
   SS.extraRevMode='amt';
   const _tg=$('S_extraRevTg');if(_tg)_tg.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===0));

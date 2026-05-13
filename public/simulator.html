@@ -211,8 +211,8 @@ tr.current{background:var(--accent-lo)}
   </div>
   <div class="card"><div class="card-title"><span class="badge">施工体制</span></div>
     <div class="grid-2">
-      <div class="field"><label class="field-label">導入人数 <span class="slider-current" id="L_pD">5人</span></label><div class="slider-wrap"><input type="range" min="1" max="30" value="5" id="L_pS" oninput="$('L_pD').textContent=this.value+'人';$('L_pM').value=this.value;calcL()"></div><input type="number" class="num-input" id="L_pM" value="5" min="1" style="width:80px;margin-top:4px" oninput="$('L_pS').value=Math.min(this.value,30);$('L_pD').textContent=this.value+'人';calcL()"></div>
-      <div class="field"><label class="field-label">実稼働日数 <span class="slider-current" id="L_dD">20日</span></label><div class="slider-wrap"><input type="range" min="1" max="120" value="20" id="L_dS" oninput="$('L_dD').textContent=this.value+'日';$('L_dM').value=this.value;calcL()"></div><input type="number" class="num-input" id="L_dM" value="20" min="1" style="width:80px;margin-top:4px" oninput="$('L_dS').value=Math.min(this.value,120);$('L_dD').textContent=this.value+'日';calcL()"></div>
+      <div class="field"><label class="field-label">導入人数 <span class="slider-current" id="L_pD">5人</span></label><div class="slider-wrap"><input type="range" min="1" max="30" value="5" id="L_pS" oninput="$('L_pD').textContent=this.value+'人';$('L_pM').value=this.value;calcL()"></div><input type="number" class="num-input" id="L_pM" value="5" min="1" max="999" style="width:80px;margin-top:4px" oninput="this.value=clamp(this.value,1,999);$('L_pS').value=Math.min(this.value,30);$('L_pD').textContent=this.value+'人';calcL()"></div>
+      <div class="field"><label class="field-label">実稼働日数 <span class="slider-current" id="L_dD">20日</span></label><div class="slider-wrap"><input type="range" min="1" max="120" value="20" id="L_dS" oninput="$('L_dD').textContent=this.value+'日';$('L_dM').value=this.value;calcL()"></div><input type="number" class="num-input" id="L_dM" value="20" min="1" max="365" style="width:80px;margin-top:4px" oninput="this.value=clamp(this.value,1,365);$('L_dS').value=Math.min(this.value,120);$('L_dD').textContent=this.value+'日';calcL()"></div>
     </div>
   </div>
   <div class="card" id="L_costCard"></div>
@@ -254,7 +254,7 @@ tr.current{background:var(--accent-lo)}
       <div class="field-help">通常工法＝1.0、難易度・工法に応じて調整</div>
     </div>
   </div>
-  <div class="card"><div class="card-title">施工条件</div><div class="grid-2"><div class="field"><label class="field-label">投入人数</label><input type="number" class="num-input" id="S_workers" value="8" min="1" oninput="syncShared();calcN();calcI()"></div><div class="field"><label class="field-label">案件実稼働日数</label><input type="number" class="num-input" id="S_pDays" value="11" min="1" oninput="syncShared();calcN();calcI()"></div></div><div class="formula-box" id="N_formula"></div></div>
+  <div class="card"><div class="card-title">施工条件</div><div class="grid-2"><div class="field"><label class="field-label">投入人数</label><input type="number" class="num-input" id="S_workers" value="8" min="1" max="999" oninput="this.value=clamp(this.value,1,999);syncShared();calcN();calcI()"></div><div class="field"><label class="field-label">案件実稼働日数</label><input type="number" class="num-input" id="S_pDays" value="11" min="1" max="365" oninput="this.value=clamp(this.value,1,365);syncShared();calcN();calcI()"></div></div><div class="formula-box" id="N_formula"></div></div>
   <div class="card"><div class="card-title">交渉条件</div>
     <div class="grid-2"><div class="field"><label class="field-label">標準稼働日数</label><input type="number" class="num-input" id="S_stdDays" value="20" oninput="syncShared();calcN();calcI()"></div><div class="field"><label class="field-label">当月実績稼働日数</label><input type="number" class="num-input" id="S_actDays" value="18" oninput="syncShared();calcN();calcI()"></div></div>
     <div class="field"><label class="field-label">現在提示単価 <span class="slider-current" id="N_curD">¥40,000</span></label><div class="slider-wrap"><input type="range" min="20000" max="100000" step="1000" value="40000" id="N_curS" oninput="syncSV(this,'N_cur','N_curD');calcN()"><input type="number" class="num-input" style="width:120px;flex:none" id="N_cur" value="40000" oninput="syncNV(this,'N_curS','N_curD');calcN()"></div></div>
@@ -303,10 +303,19 @@ tr.current{background:var(--accent-lo)}
 <script>
 /* ═══ HELPERS ═══ */
 const $=id=>document.getElementById(id);
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 function pn(s){return parseInt(String(s).replace(/[,\s¥円]/g,''),10)||0;}
 function fm(n){return isFinite(n)?Math.round(n).toLocaleString('ja-JP'):'—';}
 function yen(n){return isFinite(n)?'¥'+fm(n):'—';}
 function pct(n){return isFinite(n)?(n*100).toFixed(1)+'%':'—';}
+function clamp(n,lo,hi){const v=+n;if(!isFinite(v))return lo;return Math.min(Math.max(v,lo),hi);}
+/* eval を廃止: 再計算は関数参照で */
+const RECALC={
+  L_costCard:()=>calcL(),
+  N_costCard:()=>{calcN();calcI();},
+  I_costCard:()=>{calcN();calcI();},
+};
+function recalcOf(elId){return RECALC[elId]||(()=>{});}
 function fmtIn(el){let v=el.value.replace(/[^\d]/g,'');el.value=v?parseInt(v).toLocaleString('ja-JP'):'';}
 function tgSet(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
 function syncSV(sl,iId,dId){$(iId).value=sl.value;$(dId).textContent='¥'+(+sl.value).toLocaleString();}
@@ -345,7 +354,7 @@ function calcCosts(costs,siRate,pDays,sDays,aDays){
   rows.push({name:'合計',allocated:total,note:'',current:true});
   return{rows,total,fixed,variable,direct};
 }
-function renderBreakdown(id,rows){$(id).innerHTML=rows.map(r=>`<tr${r.current?' class="current"':''}${r.auto?' style="color:var(--accent);font-style:italic"':''}><td>${r.name}${r.auto?'<span class="auto-calc-badge">自動</span>':''}</td><td>${yen(Math.round(r.allocated))}</td><td>${r.note}</td></tr>`).join('');}
+function renderBreakdown(id,rows){$(id).innerHTML=rows.map(r=>`<tr${r.current?' class="current"':''}${r.auto?' style="color:var(--accent);font-style:italic"':''}><td>${esc(r.name)}${r.auto?'<span class="auto-calc-badge">自動</span>':''}</td><td>${yen(Math.round(r.allocated))}</td><td>${esc(r.note)}</td></tr>`).join('');}
 function drawSum(id,cls,lines){const e=$(id);e.className='summary-box '+cls;e.innerHTML='<div class="head">'+lines[0]+'</div>'+lines.slice(1).map(x=>'<div class="line">'+x+'</div>').join('');}
 
 /* ═══ COST CARD RENDER ═══ */
@@ -361,14 +370,42 @@ function renderCostList(elId,state,recalcFn){
   const el=$(elId+'_list');if(!el)return;
   el.innerHTML=state.costs.map(c=>{
     const tb=c.kind==='fixed'?'<span class="badge-pill badge-fixed">固定</span>':c.kind==='variable'?'<span class="badge-pill badge-variable">変動</span>':'<span class="badge-pill badge-direct">直接</span>';
-    return `<div class="cost-card"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${c.name}" onchange="updC('${elId}',${c.id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${c.amount}" oninput="updC('${elId}',${c.id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${c.id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${c.id})">✕</button></div></div><div class="cost-meta">${tb}</div></div>`;
+    const id=Number(c.id)|0;
+    return `<div class="cost-card"><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" onchange="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div><div style="display:flex;justify-content:flex-end"><button class="remove-btn" onclick="rmC('${elId}',${id})">✕</button></div></div><div class="cost-meta">${tb}</div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}
 function getRecalcFor(elId){return elId==='L_costCard'?'calcL()':'calcN();calcI()';}
-function updC(elId,id,key,val){const s=getStateFor(elId);const c=s.costs.find(x=>x.id===id);if(!c)return;if(key==='amount')c[key]=val===''?0:Number(val)||0;else c[key]=val;if(key==='kind')renderCostList(elId,s,getRecalcFor(elId));eval(getRecalcFor(elId));}
-function rmC(elId,id){const s=getStateFor(elId);s.costs=s.costs.filter(c=>c.id!==id);renderCostList(elId,s,getRecalcFor(elId));eval(getRecalcFor(elId));}
-function addCostTo(elId){const s=getStateFor(elId);s.costs.push({id:s.nextId++,name:$(elId+'_nn').value.trim()||'新規',amount:Number($(elId+'_na').value)||0,kind:$(elId+'_nk').value,base:$(elId+'_nb').value});$(elId+'_nn').value='';$(elId+'_na').value='';renderCostList(elId,s,getRecalcFor(elId));eval(getRecalcFor(elId));}
+function updC(elId,id,key,val){
+  const s=getStateFor(elId);
+  const c=s.costs.find(x=>x.id===id);
+  if(!c)return;
+  if(key==='amount'){c[key]=val===''?0:Number(val)||0;}
+  else if(key==='kind'){const valid=['fixed','variable','direct'];c[key]=valid.includes(val)?val:'variable';}
+  else if(key==='name'){c[key]=String(val).slice(0,100);}
+  else {c[key]=val;}
+  if(key==='kind')renderCostList(elId,s,getRecalcFor(elId));
+  recalcOf(elId)();
+}
+function rmC(elId,id){const s=getStateFor(elId);s.costs=s.costs.filter(c=>c.id!==id);renderCostList(elId,s,getRecalcFor(elId));recalcOf(elId)();}
+function addCostTo(elId){
+  const s=getStateFor(elId);
+  const validKinds=['fixed','variable','direct'];
+  const validBases=['standard','actual'];
+  const rawKind=$(elId+'_nk').value;
+  const rawBase=$(elId+'_nb').value;
+  s.costs.push({
+    id:s.nextId++,
+    name:String($(elId+'_nn').value||'').slice(0,100).trim()||'新規',
+    amount:Number($(elId+'_na').value)||0,
+    kind:validKinds.includes(rawKind)?rawKind:'variable',
+    base:validBases.includes(rawBase)?rawBase:'standard',
+  });
+  $(elId+'_nn').value='';
+  $(elId+'_na').value='';
+  renderCostList(elId,s,getRecalcFor(elId));
+  recalcOf(elId)();
+}
 
 /* ═══════════════════════════ */
 /*   TAB 1: LUMP SUM CALC     */
@@ -412,10 +449,22 @@ function calcN(){
   const curP=+($('N_cur').value)||0,propP=+($('N_prop').value)||0;
   const tm=clamp(+($('S_m').value)||0,0,95)/100,extra=+($('S_extra').value)||0;
   const cd=calcCosts(SS.costs,SS.siRate,pd,sd,ad),tc=cd.total+extra;
-  const tgtR=tc/Math.max(1-tm,.0001),needP=tgtR/Math.max(w*pd*rate,1);
-  const curR=curP*rate*w*pd,curPr=curR-tc,curM=curR>0?curPr/curR:0;
-  const propR=propP*rate*w*pd,propPr=propR-tc,propM=propR>0?propPr/propR:0;
+  const valid=w>0&&pd>0;
+  /* 人数 0 or 日数 0 で意味のない大きな needP が出るのを抑制 */
+  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?tgtR/(w*pd*rate):0;
+  const curR=valid?curP*rate*w*pd:0,curPr=curR-tc,curM=curR>0?curPr/curR:0;
+  const propR=valid?propP*rate*w*pd:0,propPr=propR-tc,propM=propR>0?propPr/propR:0;
   const gap=needP-curP;
+
+  if(!valid){
+    $('N_formula').textContent='投入人数と稼働日数を入力してください';
+    ['N_kR','N_kC','N_kN','N_kG','N_kP','N_iF','N_iV','N_iD','N_iM','N_hAV','N_hAS','N_hBV','N_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
+    $('N_sum').innerHTML='<div class="head">入力待ち</div><div class="line">投入人数と稼働日数を入力すると計算が始まります。</div>';
+    $('N_prop_text').textContent='入力後に自動生成';
+    $('N_sens').innerHTML='';
+    renderBreakdown('N_cb',cd.rows);
+    return;
+  }
 
   $('N_formula').innerHTML=`<span style="color:var(--text-dim)">元請：</span>${yen(curP)}×${rate}×${w}人×${pd}日＝<strong>${yen(curR)}</strong><br><span style="color:var(--text-dim)">提案：</span>${yen(propP)}×${rate}×${w}人×${pd}日＝<strong style="color:var(--green)">${yen(propR)}</strong>`;
   $('N_kR').textContent=yen(curR);$('N_kC').textContent=yen(tc);$('N_kN').textContent=yen(needP);$('N_kG').textContent=yen(gap);$('N_kG').className='kpi-value '+(gap>0?'red':'green');$('N_kP').textContent=yen(curPr);$('N_kP').className='kpi-value lg '+(curPr>=0?'green':'red');
@@ -455,10 +504,21 @@ function calcI(){
   const price=+($('I_pr').value)||0;
   const sd=+($('S_stdDays').value)||20,ad=+($('S_actDays').value)||sd;
   const tm=clamp(+($('S_m').value)||0,0,95)/100,extra=+($('S_extra').value)||0;
-  const rev=price*rate*w*pd;
+  const valid=w>0&&pd>0;
+  const rev=valid?price*rate*w*pd:0;
   const cd=calcCosts(SS.costs,SS.siRate,pd,sd,ad),tc=cd.total+extra;
   const prof=rev-tc,marg=rev>0?prof/rev:0;
-  const tgtR=tc/Math.max(1-tm,.0001),needP=tgtR/Math.max(w*pd*rate,1),gap=needP-price;
+  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?tgtR/(w*pd*rate):0,gap=needP-price;
+
+  if(!valid){
+    $('I_formula').textContent='投入人数と稼働日数を入力してください';
+    ['I_kR','I_kC','I_kN','I_kG','I_kP','I_iF','I_iV','I_iD','I_iM','I_hAV','I_hAS','I_hBV','I_hBS'].forEach(id=>{const el=$(id);if(el)el.textContent='---';});
+    $('I_sum').innerHTML='<div class="head">入力待ち</div><div class="line">投入人数と稼働日数を入力すると計算が始まります。</div>';
+    $('I_memo').textContent='入力後に自動生成';
+    $('I_sens').innerHTML='';
+    renderBreakdown('I_cb',cd.rows);
+    return;
+  }
 
   $('I_formula').innerHTML=`売上 ＝ ${yen(price)}×${rate}×${w}人×${pd}日 ＝ <strong>${yen(rev)}</strong>`;
   $('I_kR').textContent=yen(rev);$('I_kC').textContent=yen(tc);$('I_kN').textContent=yen(needP);$('I_kG').textContent=yen(gap);$('I_kG').className='kpi-value '+(gap>0?'red':'green');$('I_kP').textContent=yen(prof);$('I_kP').className='kpi-value lg '+(prof>=0?'green':'red');
@@ -522,55 +582,128 @@ function applyAll(d){
 
 function showSaveModal(){$('saveName').value=$('L_name').value||$('tbName').textContent||'';$('saveMemo').value='';openM('saveMod');}
 function doSave(){
-  const name=$('saveName').value.trim()||'無題';const all=loadAll();const data=gatherAll();
-  if(currentProjectId){const idx=all.findIndex(p=>p.id===currentProjectId);if(idx>=0){all[idx].name=name;all[idx].memo=$('saveMemo').value;all[idx].data=data;all[idx].updated=Date.now();}else{all.unshift({id:currentProjectId,name,memo:$('saveMemo').value,data,created:Date.now(),updated:Date.now()});}}
-  else{currentProjectId='p_'+Date.now();all.unshift({id:currentProjectId,name,memo:$('saveMemo').value,data,created:Date.now(),updated:Date.now()});}
+  const name=($('saveName').value||'').slice(0,200).trim()||'無題';
+  const memo=($('saveMemo').value||'').slice(0,1000);
+  const all=loadAll();const data=gatherAll();
+  if(currentProjectId){const idx=all.findIndex(p=>p.id===currentProjectId);if(idx>=0){all[idx].name=name;all[idx].memo=memo;all[idx].data=data;all[idx].updated=Date.now();}else{all.unshift({id:currentProjectId,name,memo,data,created:Date.now(),updated:Date.now()});}}
+  else{currentProjectId='p_'+Date.now();all.unshift({id:currentProjectId,name,memo,data,created:Date.now(),updated:Date.now()});}
   saveAll(all);localStorage.setItem(LAST_KEY,currentProjectId);$('tbName').textContent=name;closeM('saveMod');toast('保存しました：'+name);
 }
 function showListModal(){
   const all=loadAll();
-  $('listBody').innerHTML=all.length?all.map(p=>`<div class="pli${p.id===currentProjectId?' style="border-color:var(--accent);background:var(--accent-lo)"':''}"><div class="info"><div class="pn">${p.name}</div><div class="pd">${new Date(p.updated||p.created).toLocaleDateString('ja-JP')}</div></div><div class="acts"><button class="btn" style="font-size:.7rem" onclick="loadProject('${p.id}')">読込</button><button class="btn danger" style="font-size:.7rem" onclick="delProject('${p.id}')">削除</button></div></div>`).join(''):'<div class="lead">保存された案件はありません</div>';
+  $('listBody').innerHTML=all.length?all.map(p=>{
+    const safeId=esc(p.id);
+    return `<div class="pli"${p.id===currentProjectId?' style="border-color:var(--accent);background:var(--accent-lo)"':''}><div class="info"><div class="pn">${esc(p.name)}</div><div class="pd">${new Date(p.updated||p.created).toLocaleDateString('ja-JP')}</div></div><div class="acts"><button class="btn" style="font-size:.7rem" onclick="loadProject('${safeId}')">読込</button><button class="btn danger" style="font-size:.7rem" onclick="delProject('${safeId}')">削除</button></div></div>`;
+  }).join(''):'<div class="lead">保存された案件はありません</div>';
   openM('listMod');
 }
-function loadProject(id){const all=loadAll();const p=all.find(x=>x.id===id);if(!p)return;currentProjectId=id;localStorage.setItem(LAST_KEY,id);applyAll(p.data);$('tbName').textContent=p.name;closeM('listMod');toast('読み込み：'+p.name);}
+function loadProject(id){const all=loadAll();const p=all.find(x=>x.id===id);if(!p)return;currentProjectId=id;localStorage.setItem(LAST_KEY,id);applyAll(p.data);const safeName=String(p.name||'').slice(0,200);$('tbName').textContent=safeName;closeM('listMod');toast('読み込み：'+safeName);}
 function delProject(id){if(!confirm('削除しますか？'))return;saveAll(loadAll().filter(p=>p.id!==id));if(currentProjectId===id)currentProjectId=null;showListModal();}
 function clearAll(){if(!confirm('全件削除しますか？'))return;saveAll([]);currentProjectId=null;$('tbName').textContent='未保存';showListModal();}
 function newProject(){if(!confirm('新規案件を作成しますか？'))return;currentProjectId=null;LS={taxType:'excl',profMode:'amt',siRate:16.5,costs:JSON.parse(JSON.stringify(DEF_COSTS)),nextId:7};SS={workType:'',rate:1.0,siRate:16.5,costs:JSON.parse(JSON.stringify(DEF_COSTS)),nextId:7};applyAll({lump:{},shared:{}});$('tbName').textContent='未保存';toast('新規作成');}
 
 /* ═══ PDF ═══ */
 function exportPDF(){
+  /* Web 版は window.print() に統一。
+     ReactNativeWebView 経由の outerHTML 全送信は注入ペイロード流出リスクがあるため廃止。 */
   const name=$('tbName').textContent;
-  if(window.ReactNativeWebView){
-    window.ReactNativeWebView.postMessage(JSON.stringify({type:'pdf',title:name,html:document.documentElement.outerHTML}));
-  }else{
-    document.title='【統合】'+name+' - '+new Date().toLocaleDateString('ja-JP');window.print();document.title='送電線鉄塔工事 統合シミュレーター';
-  }
+  const prevTitle=document.title;
+  document.title='【統合】'+name+' - '+new Date().toLocaleDateString('ja-JP');
+  window.print();
+  document.title=prevTitle;
 }
 
 /* ═══ JSON ═══ */
 function exportJSON(){
   try{
     const data={type:'unified',version:5,project:$('tbName').textContent,state:gatherAll(),exported:new Date().toISOString()};
-    const safeProject=($('tbName').textContent||'project').replace(/[^\w\-]/g,'_');
+    const safeProject=($('tbName').textContent||'project').replace(/[^\p{L}\p{N}\-_]/gu,'_').slice(0,64);
     const filename=safeProject+'_'+new Date().toISOString().slice(0,10)+'.json';
     const content=JSON.stringify(data,null,2);
-    if(window.ReactNativeWebView){
-      window.ReactNativeWebView.postMessage(JSON.stringify({type:'json',filename:filename,content:content}));
-    }else{
-      const blob=new Blob([content],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
-    }
+    const blob=new Blob([content],{type:'application/json'});
+    const a=document.createElement('a');
+    const url=URL.createObjectURL(blob);
+    a.href=url;a.download=filename;
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
   }catch(e){
-    if(window.ReactNativeWebView){window.ReactNativeWebView.postMessage(JSON.stringify({type:'error',message:'JSON出力エラー: '+e.message}));}
-    else{alert('エラー: '+e.message);}
+    alert('JSON出力エラー: '+esc(e.message));
   }
 }
-function importJSON(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=function(ev){try{const d=JSON.parse(ev.target.result);if(d.state){applyAll(d.state);currentProjectId=null;$('tbName').textContent=d.project||'読込済';toast('JSONを読み込みました');}else alert('非対応形式');}catch(err){alert('読込失敗: '+err.message);}};r.readAsText(file);e.target.value='';}
+function sanitizeCosts(arr){
+  if(!Array.isArray(arr))return null;
+  const validKinds=['fixed','variable','direct'];
+  const validBases=['standard','actual'];
+  return arr.slice(0,200).map(c=>({
+    id:Number(c&&c.id)|0,
+    name:String(c&&c.name||'').slice(0,100),
+    amount:Number.isFinite(+(c&&c.amount))?+(c.amount):0,
+    kind:validKinds.includes(c&&c.kind)?c.kind:'variable',
+    base:validBases.includes(c&&c.base)?c.base:'standard',
+  }));
+}
+function sanitizeState(d){
+  if(!d||typeof d!=='object')return null;
+  const out={};
+  if(d.lump&&typeof d.lump==='object'){
+    const l=d.lump;const taxType=['excl','incl'].includes(l.taxType)?l.taxType:'excl';const profMode=['amt','rate'].includes(l.profMode)?l.profMode:'amt';
+    const costs=sanitizeCosts(l.costs);
+    out.lump={
+      taxType,profMode,
+      siRate:Number.isFinite(+l.siRate)?+l.siRate:16.5,
+      costs:costs||undefined,
+      nextId:Number(l.nextId)|0||7,
+      amount:String(l.amount||'').slice(0,30),
+      tax:Number(l.tax)||10,
+      people:clamp(l.people,1,999999),
+      days:clamp(l.days,1,999999),
+      profA:String(l.profA||'').slice(0,30),
+      profR:Number(l.profR)||0,
+      ref:Number(l.ref)||35000,
+      name:String(l.name||'').slice(0,200),
+    };
+  }
+  if(d.shared&&typeof d.shared==='object'){
+    const s=d.shared;const costs=sanitizeCosts(s.costs);
+    out.shared={
+      workType:String(s.workType||'').slice(0,100),
+      rate:Number.isFinite(+s.rate)?+s.rate:1,
+      siRate:Number.isFinite(+s.siRate)?+s.siRate:16.5,
+      costs:costs||undefined,
+      nextId:Number(s.nextId)|0||7,
+    };
+  }
+  if(d.nego&&typeof d.nego==='object')out.nego=d.nego;
+  if(d.internal&&typeof d.internal==='object')out.internal=d.internal;
+  return out;
+}
+function importJSON(e){
+  const file=e.target.files[0];if(!file)return;
+  if(file.size>1024*1024){alert('ファイルが大きすぎます（1MB以上）');e.target.value='';return;}
+  const r=new FileReader();
+  r.onload=function(ev){
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d&&d.type==='unified'&&d.state){
+        const safe=sanitizeState(d.state);
+        if(!safe){alert('JSON の構造が不正です');return;}
+        applyAll(safe);
+        currentProjectId=null;
+        $('tbName').textContent=esc(String(d.project||'読込済').slice(0,80));
+        toast('JSONを読み込みました');
+      }else{
+        alert('非対応形式 (type:unified ではない、または state が無い)');
+      }
+    }catch(err){alert('読込失敗: '+esc(err.message));}
+  };
+  r.readAsText(file);e.target.value='';
+}
 
 /* ═══ TEMPLATES ═══ */
 function loadTpls(){try{return JSON.parse(localStorage.getItem(TPL_STORAGE)||'[]');}catch{return[];}}
 function saveTpls(a){localStorage.setItem(TPL_STORAGE,JSON.stringify(a));}
-function showTplModal(){const t=loadTpls();$('tplBody').innerHTML=t.length?t.map((tp,i)=>`<div class="pli"><div class="info"><div class="pn">${tp.name}</div><div class="pd">${new Date(tp.created).toLocaleDateString('ja-JP')}</div></div><div class="acts"><button class="btn" style="font-size:.7rem" onclick="applyTpl(${i})">適用</button><button class="btn danger" style="font-size:.7rem" onclick="delTpl(${i})">削除</button></div></div>`).join(''):'<div class="lead">テンプレートなし</div>';openM('tplMod');}
-function saveTpl(){const name=prompt('テンプレート名');if(!name)return;const t=loadTpls();t.unshift({name,costs:JSON.parse(JSON.stringify(SS.costs)),nextId:SS.nextId,siRate:SS.siRate,created:Date.now()});saveTpls(t);showTplModal();toast('テンプレ保存');}
+function showTplModal(){const t=loadTpls();$('tplBody').innerHTML=t.length?t.map((tp,i)=>{const idx=Number(i)|0;return `<div class="pli"><div class="info"><div class="pn">${esc(tp.name)}</div><div class="pd">${new Date(tp.created).toLocaleDateString('ja-JP')}</div></div><div class="acts"><button class="btn" style="font-size:.7rem" onclick="applyTpl(${idx})">適用</button><button class="btn danger" style="font-size:.7rem" onclick="delTpl(${idx})">削除</button></div></div>`;}).join(''):'<div class="lead">テンプレートなし</div>';openM('tplMod');}
+function saveTpl(){const raw=prompt('テンプレート名');if(!raw)return;const name=String(raw).slice(0,100).trim();if(!name)return;const t=loadTpls();t.unshift({name,costs:JSON.parse(JSON.stringify(SS.costs)),nextId:SS.nextId,siRate:SS.siRate,created:Date.now()});saveTpls(t);showTplModal();toast('テンプレ保存');}
 function applyTpl(i){const t=loadTpls()[i];if(!t||!confirm('「'+t.name+'」を適用？'))return;SS.costs=JSON.parse(JSON.stringify(t.costs));SS.nextId=t.nextId||7;SS.siRate=t.siRate??16.5;renderCostCard('S_costCard',SS,'calcN();calcI()');calcN();calcI();closeM('tplMod');toast('テンプレ適用');}
 function delTpl(i){if(!confirm('削除？'))return;const t=loadTpls();t.splice(i,1);saveTpls(t);showTplModal();}
 

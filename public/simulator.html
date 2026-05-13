@@ -400,6 +400,24 @@ tr.current{background:var(--accent-lo)}
     <div class="grid-2"><div class="field"><label class="field-label">目標利益率 <span class="slider-current" id="S_mD">20%</span></label><div class="slider-wrap"><input type="range" min="0" max="40" step="1" value="20" id="S_mS" oninput="$('S_m').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"><input type="number" class="num-input" style="width:80px;flex:none" id="S_m" value="20" oninput="$('S_mS').value=this.value;$('S_mD').textContent=this.value+'%';syncShared();calcN();calcI()"></div></div><div class="field"><label class="field-label">その他控除（円）</label><input type="number" class="num-input" id="S_extra" value="0" oninput="syncShared();calcN();calcI()"></div></div>
     <div class="field"><label class="field-label">提案着地単価 <span class="slider-current" id="N_propD">¥60,000</span></label><div class="slider-wrap"><input type="range" min="20000" max="120000" step="1000" value="60000" id="N_propS" oninput="syncSV(this,'N_prop','N_propD');calcN()"><input type="number" class="num-input" style="width:120px;flex:none" id="N_prop" value="60000" oninput="syncNV(this,'N_propS','N_propD');calcN()"></div></div>
   </div>
+  <div class="card"><div class="card-title">売上構成・消費税 <span class="badge warn">人件費単価とは別に発生する売上</span></div>
+    <div class="field"><label class="field-label">実費請求 (上乗せ売上)</label>
+      <input type="number" class="num-input" id="S_extraRev" value="0" min="0" oninput="calcN();calcI()">
+      <div class="field-help">ガソリン・高速・車両リース代等を取引先に人件費請求とは別に請求する金額。<br>例: 人件費¥1,440,000 + 諸経費¥400,000 = 取引先請求¥1,840,000</div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label class="field-label">消費税率</label>
+        <select class="num-input" id="S_taxR" onchange="calcN();calcI()">
+          <option value="10">10%</option>
+          <option value="8">8% (軽減)</option>
+          <option value="0">なし</option>
+        </select>
+      </div>
+      <div class="field"><label class="field-label">税込合計 (現在単価)</label>
+        <div class="formula-box" id="N_taxIncl" style="margin-top:0;font-size:.9rem">—</div>
+      </div>
+    </div>
+  </div>
   <div class="card" id="S_costCard"></div>
 </div>
 <div class="col">
@@ -694,13 +712,25 @@ function calcN(){
   const sd=+($('S_stdDays').value)||20,ad=+($('S_actDays').value)||sd;
   const curP=+($('N_cur').value)||0,propP=+($('N_prop').value)||0;
   const tm=clamp(+($('S_m').value)||0,0,95)/100,extra=+($('S_extra').value)||0;
+  const extraRev=Math.max(0,+($('S_extraRev')?.value)||0);
+  const taxR=(+($('S_taxR')?.value)||0)/100;
   const cd=calcCosts(SS.costs,SS.siRate,pd,sd,ad),tc=cd.total+extra;
   const valid=w>0&&pd>0;
-  /* 人数 0 or 日数 0 で意味のない大きな needP が出るのを抑制 */
-  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?tgtR/(w*pd*rate):0;
-  const curR=valid?curP*rate*w*pd:0,curPr=curR-tc,curM=curR>0?curPr/curR:0;
-  const propR=valid?propP*rate*w*pd:0,propPr=propR-tc,propM=propR>0?propPr/propR:0;
+  /* 必要人工単価: 売上(人件費+実費請求) >= tc/(1-tm) を満たす最小単価 */
+  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?Math.max(0,(tgtR-extraRev)/(w*pd*rate)):0;
+  const laborR_cur=valid?curP*rate*w*pd:0,curR=laborR_cur+extraRev,curPr=curR-tc,curM=curR>0?curPr/curR:0;
+  const laborR_prop=valid?propP*rate*w*pd:0,propR=laborR_prop+extraRev,propPr=propR-tc,propM=propR>0?propPr/propR:0;
   const gap=needP-curP;
+
+  /* 税込合計表示を更新 (常時) */
+  const taxIncl=Math.round(curR*(1+taxR));
+  const taxAmt=Math.round(curR*taxR);
+  const taxBox=$('N_taxIncl');
+  if(taxBox){
+    if(curR>0){
+      taxBox.innerHTML=`<strong style="color:var(--accent)">${yen(taxIncl)}</strong><br><span style="color:var(--text-dim);font-size:.78rem">税抜${yen(Math.round(curR))} + 消費税${yen(taxAmt)}</span>`;
+    }else taxBox.textContent='—';
+  }
 
   if(!valid){
     $('N_formula').textContent='投入人数と稼働日数を入力してください';
@@ -712,14 +742,17 @@ function calcN(){
     return;
   }
 
-  $('N_formula').innerHTML=`<span style="color:var(--text-dim)">元請：</span>${yen(curP)}×${rate}×${w}人×${pd}日＝<strong>${yen(curR)}</strong><br><span style="color:var(--text-dim)">提案：</span>${yen(propP)}×${rate}×${w}人×${pd}日＝<strong style="color:var(--green)">${yen(propR)}</strong>`;
+  const extraTxt=extraRev>0?`<br><span style="color:var(--text-dim)">実費請求：</span><strong>+${yen(extraRev)}</strong>`:'';
+  $('N_formula').innerHTML=`<span style="color:var(--text-dim)">元請：</span>${yen(curP)}×${rate}×${w}人×${pd}日＝<strong>${yen(laborR_cur)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong>${yen(curR)}</strong>`:''}<br><span style="color:var(--text-dim)">提案：</span>${yen(propP)}×${rate}×${w}人×${pd}日＝<strong style="color:var(--green)">${yen(laborR_prop)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong style="color:var(--green)">${yen(propR)}</strong>`:''}`;
   $('N_kR').textContent=yen(curR);$('N_kC').textContent=yen(tc);$('N_kN').textContent=yen(needP);$('N_kG').textContent=yen(gap);$('N_kG').className='kpi-value '+(gap>0?'red':'green');$('N_kP').textContent=yen(curPr);$('N_kP').className='kpi-value lg '+(curPr>=0?'green':'red');
   $('N_hAV').textContent=gap>0?'引き上げ提案が必要':'現行でも成立';$('N_hAS').textContent=gap>0?`差額${yen(gap)}`:`利益${yen(curPr)}`;$('N_hA').className='hero-box '+(gap>0?'bad':'good');
   $('N_hBV').textContent=yen(propP);$('N_hBS').textContent=`利益${yen(propPr)}（${pct(propM)}）`;
   $('N_iF').textContent=yen(Math.round(cd.fixed));$('N_iV').textContent=yen(Math.round(cd.variable));$('N_iD').textContent=yen(Math.round(cd.direct));$('N_iM').textContent=pct(curM);
   if(gap<=0)drawSum('N_sum','good',['現行単価で成立',`利益率${pct(curM)}、提案${yen(propP)}で利益${yen(propPr)}`]);
   else drawSum('N_sum','bad',['現在提示では不足',`必要${yen(needP)}、差額${yen(gap)}`]);
-  $('N_prop_text').textContent=`【提案】\n${w}名・${pd}日・倍率${rate}前提。コスト${yen(tc)}（福利費込）。\n現在${yen(curP)} → 売上${yen(curR)} 利益${yen(curPr)}（${pct(curM)}）\n必要${yen(needP)}（目標${(tm*100).toFixed(0)}%）\n提案${yen(propP)} → 利益${yen(propPr)}（${pct(propM)}）`;
+  const extraLine=extraRev>0?`\n実費請求${yen(extraRev)}込み (税抜売上${yen(Math.round(curR))})`:'';
+  const taxLine=taxR>0?`\n税込合計${yen(taxIncl)} (税${(taxR*100).toFixed(0)}%)`:'';
+  $('N_prop_text').textContent=`【提案】\n${w}名・${pd}日・倍率${rate}前提。コスト${yen(tc)}（福利費込）。${extraLine}${taxLine}\n現在${yen(curP)} → 売上${yen(Math.round(curR))} 利益${yen(curPr)}（${pct(curM)}）\n必要${yen(needP)}（目標${(tm*100).toFixed(0)}%）\n提案${yen(propP)} → 利益${yen(propPr)}（${pct(propM)}）`;
   renderBreakdown('N_cb',cd.rows);
   const nStep=curP>=80000?10000:curP>=40000?5000:2000;
   const nSet=new Set([
@@ -728,7 +761,7 @@ function calcN(){
   ].filter(p=>p>0));
   const nPrices=[...(SS.customPricesN||[]),...nSet].sort((a,b)=>a-b);
   $('N_sens').innerHTML=nPrices.map(p=>{
-    const r=p*rate*w*pd,pr=r-tc,m=r>0?pr/r:0;
+    const r=p*rate*w*pd+extraRev,pr=r-tc,m=r>0?pr/r:0;
     const isNeed=Math.abs(p-needP)<nStep/2;
     return`<tr${p===curP?' class="current"':''}style="${isNeed?'outline:1px solid var(--amber);':''}">
       <td>${yen(p)}
@@ -750,11 +783,12 @@ function calcI(){
   const price=+($('I_pr').value)||0;
   const sd=+($('S_stdDays').value)||20,ad=+($('S_actDays').value)||sd;
   const tm=clamp(+($('S_m').value)||0,0,95)/100,extra=+($('S_extra').value)||0;
+  const extraRev=Math.max(0,+($('S_extraRev')?.value)||0);
   const valid=w>0&&pd>0;
-  const rev=valid?price*rate*w*pd:0;
+  const laborR=valid?price*rate*w*pd:0,rev=laborR+extraRev;
   const cd=calcCosts(SS.costs,SS.siRate,pd,sd,ad),tc=cd.total+extra;
   const prof=rev-tc,marg=rev>0?prof/rev:0;
-  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?tgtR/(w*pd*rate):0,gap=needP-price;
+  const tgtR=tc/Math.max(1-tm,.0001),needP=valid?Math.max(0,(tgtR-extraRev)/(w*pd*rate)):0,gap=needP-price;
 
   if(!valid){
     $('I_formula').textContent='投入人数と稼働日数を入力してください';
@@ -766,7 +800,7 @@ function calcI(){
     return;
   }
 
-  $('I_formula').innerHTML=`売上 ＝ ${yen(price)}×${rate}×${w}人×${pd}日 ＝ <strong>${yen(rev)}</strong>`;
+  $('I_formula').innerHTML=`売上 ＝ ${yen(price)}×${rate}×${w}人×${pd}日 ＝ <strong>${yen(laborR)}</strong>${extraRev>0?` + 実費 ${yen(extraRev)} = <strong style="color:var(--accent)">${yen(rev)}</strong>`:''}`;
   $('I_kR').textContent=yen(rev);$('I_kC').textContent=yen(tc);$('I_kN').textContent=yen(needP);$('I_kG').textContent=yen(gap);$('I_kG').className='kpi-value '+(gap>0?'red':'green');$('I_kP').textContent=yen(prof);$('I_kP').className='kpi-value lg '+(prof>=0?'green':'red');
   $('I_hAV').textContent=prof>=0?'受注検討可':'条件見直し';$('I_hAS').textContent=prof>=0?`利益${yen(prof)}`:`不足${yen(-prof)}`;$('I_hA').className='hero-box '+(prof>=0?'good':'bad');
   $('I_hBV').textContent=yen(needP);$('I_hBS').textContent=`目標${(tm*100).toFixed(0)}%基準`;
@@ -783,7 +817,7 @@ function calcI(){
   ].filter(p=>p>0));
   const iPrices=[...(SS.customPricesI||[]),...iSet].sort((a,b)=>a-b);
   $('I_sens').innerHTML=iPrices.map(p=>{
-    const r=p*rate*w*pd,pr=r-tc,m=r>0?pr/r:0;
+    const r=p*rate*w*pd+extraRev,pr=r-tc,m=r>0?pr/r:0;
     const isNeed=Math.abs(p-needP)<iStep/2;
     return`<tr${p===price?' class="current"':''}style="${isNeed?'outline:1px solid var(--amber);':''}">
       <td>${yen(p)}
@@ -804,7 +838,7 @@ function gatherAll(){
     lump:{taxType:LS.taxType,profMode:LS.profMode,siRate:LS.siRate,costs:JSON.parse(JSON.stringify(LS.costs)),nextId:LS.nextId,
       amount:$('L_amount').value,tax:$('L_tax').value,people:$('L_pM').value,days:$('L_dM').value,profA:$('L_profA').value,profR:$('L_profR').value,ref:$('L_ref').value,name:$('L_name').value},
     shared:{workType:SS.workType,rate:SS.rate,siRate:SS.siRate,costs:JSON.parse(JSON.stringify(SS.costs)),nextId:SS.nextId,
-      workers:$('S_workers').value,pDays:$('S_pDays').value,stdDays:$('S_stdDays').value,actDays:$('S_actDays').value,margin:$('S_m').value,extra:$('S_extra').value,
+      workers:$('S_workers').value,pDays:$('S_pDays').value,stdDays:$('S_stdDays').value,actDays:$('S_actDays').value,margin:$('S_m').value,extra:$('S_extra').value,extraRev:$('S_extraRev')?.value||'0',taxR:$('S_taxR')?.value||'10',
       curPrice:$('N_cur').value,propPrice:$('N_prop').value,intPrice:$('I_pr').value}
   };
 }
@@ -818,6 +852,8 @@ function applyAll(d){
   }
   if(d.shared){const s=d.shared;SS.workType=s.workType||'';SS.rate=s.rate||1.0;SS.siRate=s.siRate??16.5;SS.costs=s.costs||JSON.parse(JSON.stringify(DEF_COSTS));SS.nextId=s.nextId||7;
     $('S_workers').value=s.workers||8;$('S_pDays').value=s.pDays||11;$('S_stdDays').value=s.stdDays||20;$('S_actDays').value=s.actDays||18;$('S_m').value=s.margin||20;$('S_mS').value=s.margin||20;$('S_mD').textContent=(s.margin||20)+'%';$('S_extra').value=s.extra||0;
+    if($('S_extraRev'))$('S_extraRev').value=s.extraRev||0;
+    if($('S_taxR'))$('S_taxR').value=s.taxR||'10';
     $('N_cur').value=s.curPrice||40000;$('N_curS').value=s.curPrice||40000;$('N_curD').textContent=yen(+(s.curPrice||40000));
     $('N_prop').value=s.propPrice||60000;$('N_propS').value=s.propPrice||60000;$('N_propD').textContent=yen(+(s.propPrice||60000));
     $('I_pr').value=s.intPrice||45000;$('I_prS').value=s.intPrice||45000;$('I_prD').textContent=yen(+(s.intPrice||45000));
@@ -932,7 +968,8 @@ function newProject(){
   LS={taxType:'excl',profMode:'amt',siRate:16.5,costs:[],nextId:1};
   SS={workType:'',rate:1.0,siRate:16.5,costs:[],nextId:1};
   /* 入力欄を空に */
-  ['L_name','L_amount','L_profA','L_profR','S_workType','N_cur','N_prop','I_pr','S_extra','L_pM','L_dM','S_workers','S_pDays','S_stdDays','S_actDays','S_m'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  ['L_name','L_amount','L_profA','L_profR','S_workType','N_cur','N_prop','I_pr','S_extra','S_extraRev','L_pM','L_dM','S_workers','S_pDays','S_stdDays','S_actDays','S_m'].forEach(id=>{const el=$(id);if(el)el.value='';});
+  if($('S_taxR'))$('S_taxR').value='10';
   /* スライダー・表示を最小値か '—' に */
   $('L_taxD').textContent='10%';$('L_tax').value=10;
   $('L_pD').textContent='—';$('L_pS').value=1;

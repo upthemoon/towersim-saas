@@ -21,9 +21,10 @@ export default async function AppPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* アカウント操作だけの細い帯。アプリ名・キャッチコピーは iframe 内 simulator.html 側で表示。 */}
+      {/* アカウント操作だけの細い帯。アプリ名・キャッチコピーは iframe 内 simulator.html 側で表示。
+          simulator.html の `.header-inner` が `padding: 0 22px` で左端に寄せているのでこちらも同じ余白に合わせる。 */}
       <header className="bg-steel-dark text-paper border-b border-steel">
-        <div className="max-w-6xl mx-auto px-4 h-9 flex items-center justify-between gap-3 text-xs">
+        <div className="h-9 flex items-center justify-between gap-3 text-xs" style={{ paddingLeft: 22, paddingRight: 22 }}>
           <Link href="/" className="flex items-center gap-1.5 text-paper-2 hover:text-paper">
             <TowerIcon size={16} className="text-paper" />
             <span className="font-mincho tracking-wider">TowerSim</span>

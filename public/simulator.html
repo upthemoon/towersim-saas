@@ -352,7 +352,7 @@ tr.current{background:var(--accent-lo)}
 </head>
 <body>
 
-<header class="header"><div class="header-inner"><div><h1><span class="icon"><svg viewBox="0 0 64 64" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M32 4 L24 14 L40 14 Z"/><rect x="14" y="14" width="36" height="2.5"/><rect x="13" y="16.5" width="3" height="6"/><rect x="48" y="16.5" width="3" height="6"/><rect x="10" y="24" width="44" height="2.5"/><rect x="9" y="26.5" width="3" height="6"/><rect x="52" y="26.5" width="3" height="6"/><path d="M24 14 L20 56 L44 56 L40 14 L37 14 L41 56 L23 56 L27 14 Z"/><path d="M25 20 L39 32 L25 44 L25 42 L37 32 L25 22 Z"/><path d="M39 20 L25 32 L39 44 L39 42 L27 32 L39 22 Z"/><rect x="14" y="56" width="36" height="2.5"/><rect x="14" y="60" width="36" height="2.5"/></svg></span>どんな工事でも使える原価・交渉シミュレーター</h1><div class="sub">総額提示案件 ／ 単価提案（交渉用） ／ 社内採算判定</div></div></div></header>
+<header class="header"><div class="header-inner"><div><h1><span class="icon"><svg viewBox="0 0 64 64" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M32 4 L24 14 L40 14 Z"/><rect x="14" y="14" width="36" height="2.5"/><rect x="13" y="16.5" width="3" height="6"/><rect x="48" y="16.5" width="3" height="6"/><rect x="10" y="24" width="44" height="2.5"/><rect x="9" y="26.5" width="3" height="6"/><rect x="52" y="26.5" width="3" height="6"/><path d="M24 14 L20 56 L44 56 L40 14 L37 14 L41 56 L23 56 L27 14 Z"/><path d="M25 20 L39 32 L25 44 L25 42 L37 32 L25 22 Z"/><path d="M39 20 L25 32 L39 44 L39 42 L27 32 L39 22 Z"/><rect x="14" y="56" width="36" height="2.5"/><rect x="14" y="60" width="36" height="2.5"/></svg></span>どんな工事でも使える原価・交渉シミュレーター</h1><div class="sub">総額提示案件 ／ 単価交渉 (2単価比較) ／ 受注可否判断 (単一単価)</div></div></div></header>
 
 <!-- TOOLBAR -->
 <div class="toolbar"><div class="toolbar-inner">
@@ -379,9 +379,9 @@ tr.current{background:var(--accent-lo)}
 
 <!-- TAB BAR -->
 <div class="tab-bar"><div class="tab-bar-inner">
-  <button class="tab-btn active" onclick="switchTab('lump')">総額提示案件</button>
-  <button class="tab-btn" onclick="switchTab('nego')">単価提案（交渉用）</button>
-  <button class="tab-btn" onclick="switchTab('internal')">社内採算判定</button>
+  <button class="tab-btn active" onclick="switchTab('lump')" title="元請から総額○○円で提示された時の適正性判定">総額提示案件</button>
+  <button class="tab-btn" onclick="switchTab('nego')" title="現在単価 vs 提案単価の比較で交渉根拠を作る">単価交渉</button>
+  <button class="tab-btn" onclick="switchTab('internal')" title="単一単価で「受注可否」「採算性」を即判断">受注可否判断</button>
 </div></div>
 
 <!-- 印刷専用ヘッダー -->
@@ -408,6 +408,11 @@ tr.current{background:var(--accent-lo)}
     <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label class="field-label" style="margin:0">目標利益</label><div class="tg" id="L_profTg"><button class="on" onclick="LS.profMode='amt';tgSet(this);$('L_profA').style.display='';$('L_profR').style.display='none';calcL()">金額</button><button onclick="LS.profMode='rate';tgSet(this);$('L_profA').style.display='none';$('L_profR').style.display='';calcL()">利益率(%)</button></div></div><input type="text" class="num-input" id="L_profA" placeholder="1,000,000" oninput="fmtIn(this);calcL()"><input type="number" class="num-input" id="L_profR" placeholder="10" step="0.5" style="display:none" oninput="calcL()"></div>
     <div class="field"><label class="field-label">参考1人工単価（要望単価）<span class="slider-current" id="L_refD">¥35,000</span></label><div class="slider-wrap"><input type="range" min="15000" max="80000" step="1000" value="35000" id="L_ref" oninput="$('L_refD').textContent=yen(+this.value);calcL()"></div><div class="slider-labels"><span>¥15,000</span><span>¥80,000</span></div></div>
   </div>
+  <div class="card" style="background:transparent;border-style:dashed">
+    <div class="card-title"><span class="badge warn">タブ間コピー</span> 同じ案件を別タブでも検証する用</div>
+    <button class="btn primary" style="width:100%" onclick="copyLumpToShared()">→ 単価交渉 / 受注可否判断 にコピー</button>
+    <div class="field-help" style="margin-top:6px">体制・コスト・標準日数・目標利益率 を単価交渉タブにコピー。契約金額から人工単価を逆算して 現在単価 にセット。</div>
+  </div>
 </div>
 <div class="col">
   <div class="card"><div class="card-title"><span class="badge">単価比較（実質 vs 要望）</span></div>
@@ -416,6 +421,7 @@ tr.current{background:var(--accent-lo)}
   </div>
   <div id="L_alert"></div>
   <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価 (余剰/人工)</span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
+  <div class="card"><div class="card-title"><span class="badge">単価の階層分解</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">1人工あたりの内訳</span></div><div id="L_waterfall" class="waterfall"></div></div>
   <div class="card"><div class="card-title"><span class="badge">コスト内訳</span></div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分後</th><th>算式</th></tr></thead><tbody id="L_cb"></tbody></table></div></div>
   <div class="card"><div class="card-title"><span class="badge">契約金額の感度</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">契約金額を変えた時の利益・実質単価の変化</span></div><div class="table-wrap"><table><thead><tr><th>契約金額</th><th>目標利益</th><th>残額 (余剰)</th><th>実質単価/人工</th><th>利益率</th></tr></thead><tbody id="L_sens"></tbody></table></div></div>
   <div class="card"><div class="card-title"><span class="badge">交渉メモ</span></div><div class="memo-box" id="L_memo">入力後に自動生成</div></div>
@@ -481,6 +487,11 @@ tr.current{background:var(--accent-lo)}
     </div>
   </div>
   <div class="card" id="S_costCard"></div>
+  <div class="card" style="background:transparent;border-style:dashed">
+    <div class="card-title"><span class="badge warn">タブ間コピー</span> 同じ案件を別タブでも検証する用</div>
+    <button class="btn primary" style="width:100%" onclick="copySharedToLump()">→ 総額提示案件 にコピー</button>
+    <div class="field-help" style="margin-top:6px">体制・コスト・標準日数・目標利益率 を総額提示タブにコピー。現在単価 × 体制 から契約金額を逆算してセット。</div>
+  </div>
 </div>
 <div class="col">
   <div class="hero-grid"><div class="hero-box" id="N_hA"><div class="hero-label">交渉判定</div><div class="hero-value" id="N_hAV">—</div><div class="hero-sub" id="N_hAS">—</div></div><div class="hero-box warn-box"><div class="hero-label">提案着地単価</div><div class="hero-value" id="N_hBV">—</div><div class="hero-sub" id="N_hBS">—</div></div></div>
@@ -495,7 +506,7 @@ tr.current{background:var(--accent-lo)}
 </div>
 
 <!-- ===== TAB 3: INTERNAL (共有) ===== -->
-<div class="tab-pane" id="pane-internal" data-print-title="③ 社内採算判定 — 設定単価での案件採算性">
+<div class="tab-pane" id="pane-internal" data-print-title="③ 受注可否判断 — 単一単価での採算性即判定">
 <div class="app">
 <div class="col">
   <div class="card"><div class="card-title">共有入力は「単価提案」タブと連動 <span class="badge">自動同期</span></div><div class="lead">工種・工法・人数・日数・コスト・利益率は単価提案タブと共有されています。</div></div>
@@ -802,6 +813,27 @@ function calcL(){
   $('L_oReq').textContent=yen(Math.round(needRev));
   $('L_oBE').textContent=md>0?yen(Math.round(beUnitP)):'---';
   $('L_oBER').textContent=yen(Math.round(beRev));
+  /* 単価階層分解 */
+  if(md>0){
+    const laborPerU=cd.labor/md, siPerU=cd.si/md, otherPerU=(cd.other+cd.direct)/md;
+    const subAfterSi=laborPerU+siPerU, subBE=subAfterSi+otherPerU;
+    const profitPerU=tp/md;
+    const tmDisp=LS.profMode==='amt'?(rev>0?(tp/rev*100).toFixed(1)+'% (金額固定)':'金額'):((parseFloat($('L_profR').value)||0).toFixed(1)+'%');
+    $('L_waterfall').innerHTML=`
+      <div class="wf-row step"><span class="wf-label">給与 (人件費按分/人工)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(laborPerU))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 法定福利費</span><span class="wf-delta">+${yen(Math.round(siPerU))}</span><span class="wf-amount">${yen(Math.round(subAfterSi))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 諸経費 (変動・固定・直接)</span><span class="wf-delta">+${yen(Math.round(otherPerU))}</span><span class="wf-amount">${yen(Math.round(subBE))}</span></div>
+      <div class="wf-row subtotal be"><span class="wf-label">＝ 損益分岐単価 (利益0)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(subBE))}</span></div>
+      <div class="wf-row step"><span class="wf-label">＋ 目標利益 ${tmDisp}</span><span class="wf-delta">+${yen(Math.round(profitPerU))}</span><span class="wf-amount">${yen(Math.round(needUnitP))}</span></div>
+      <div class="wf-row subtotal need"><span class="wf-label">＝ 必要単価 (目標利益確保)</span><span class="wf-delta">　</span><span class="wf-amount">${yen(Math.round(needUnitP))}</span></div>
+      <div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--bg2);font-size:.75rem;color:var(--text-dim);line-height:1.6">
+        契約金額 ${ok?yen(rev):'未入力'} → 1人工あたり ${ok&&md>0?yen(Math.round(rev/md)):'—'}<br>
+        必要単価 ${md>0?yen(Math.round(needUnitP)):'—'} と比較して ${ok&&md>0?(rev/md>=needUnitP?`<strong style="color:var(--green)">+${yen(Math.round(rev/md-needUnitP))}/人工 余裕</strong>`:`<strong style="color:var(--red)">${yen(Math.round(rev/md-needUnitP))}/人工 不足</strong>`):'—'}
+      </div>
+    `;
+  }else{
+    $('L_waterfall').innerHTML='<div style="padding:14px;color:var(--text-dim);font-size:.85rem">体制 (人数・日数) を入力すると単価分解が表示されます</div>';
+  }
   renderBreakdown('L_cb',cd.rows);
   /* 契約金額の感度表: 契約金額を変えた時の利益と実質単価 */
   if(ok&&md>0){
@@ -1143,6 +1175,73 @@ function copyProject(id){
 function loadProject(id){const all=loadAll();const p=all.find(x=>x.id===id);if(!p)return;currentProjectId=id;localStorage.setItem(LAST_KEY,id);applyAll(p.data);const safeName=String(p.name||'').slice(0,200);$('tbName').textContent=safeName;closeM('listMod');toast('読み込み：'+safeName);}
 function delProject(id){if(!confirm('削除しますか？'))return;saveAll(loadAll().filter(p=>p.id!==id));if(currentProjectId===id)currentProjectId=null;populateYearKindFilters();renderListBody();}
 function clearAll(){if(!confirm('全件削除しますか？'))return;saveAll([]);currentProjectId=null;$('tbName').textContent='未保存';populateYearKindFilters();renderListBody();}
+/* タブ間コピー: 同一案件を Tab 1 と Tab 2/3 の両方で検証する用 */
+function copyLumpToShared(){
+  if(!confirm('総額提示案件のコスト・体制を 単価交渉 / 受注可否判断 タブにコピーします。\n単価交渉側の現在のデータは上書きされます。続けますか？'))return;
+  SS.costs=JSON.parse(JSON.stringify(LS.costs));
+  SS.siRate=LS.siRate;
+  SS.nextId=LS.nextId;
+  /* 体制 */
+  $('S_workers').value=$('L_pM').value||'';
+  $('S_pDays').value=$('L_dM').value||'';
+  $('S_stdDays').value=$('L_sDays')?.value||'20';
+  /* 契約金額から人工単価を逆算 → 現在単価/受注判定単価 */
+  const rev=pn($('L_amount').value);
+  const pp=+$('L_pM').value||0, dd=+$('L_dM').value||0;
+  const md=pp*dd;
+  if(rev>0&&md>0){
+    const unitP=Math.round(rev/md);
+    $('N_cur').value=unitP;
+    $('N_curS').value=clamp(unitP,20000,100000);
+    $('N_curD').textContent=yen(unitP);
+    $('I_pr').value=unitP;
+    $('I_prS').value=clamp(unitP,20000,100000);
+    $('I_prD').textContent=yen(unitP);
+  }
+  /* 目標利益率モードならコピー */
+  if(LS.profMode==='rate'){
+    const m=parseFloat($('L_profR').value)||20;
+    $('S_m').value=m;
+    $('S_mS').value=clamp(m,0,40);
+    $('S_mD').textContent=m+'%';
+  }
+  renderCostList('S_costCard',SS,'calcN();calcI()');
+  calcN();calcI();
+  toast('単価交渉 / 受注可否判断 にコピーしました');
+}
+function copySharedToLump(){
+  if(!confirm('単価交渉 / 受注可否判断 タブのコスト・体制・単価を 総額提示案件 にコピーします。\n総額側の現在のデータは上書きされます。続けますか？'))return;
+  LS.costs=JSON.parse(JSON.stringify(SS.costs));
+  LS.siRate=SS.siRate;
+  LS.nextId=SS.nextId;
+  /* 体制 */
+  $('L_pM').value=$('S_workers').value||'';
+  $('L_pS').value=clamp(+$('S_workers').value||5,1,30);
+  $('L_pD').textContent=($('L_pM').value||'0')+'人';
+  $('L_dM').value=$('S_pDays').value||'';
+  $('L_dS').value=clamp(+$('S_pDays').value||20,1,120);
+  $('L_dD').textContent=($('L_dM').value||'0')+'日';
+  if($('L_sDays'))$('L_sDays').value=$('S_stdDays').value||'20';
+  /* 現在単価 × 体制 × 倍率 から契約金額逆算 */
+  const curP=+$('N_cur').value||0;
+  const pp=+$('S_workers').value||0, dd=+$('S_pDays').value||0;
+  const rate=SS.rate||1;
+  const amt=Math.round(curP*pp*dd*rate);
+  if(amt>0){
+    $('L_amount').value=amt.toLocaleString('ja-JP');
+  }
+  /* 目標利益率を率モードに */
+  const m=+$('S_m').value||20;
+  LS.profMode='rate';
+  $('L_profR').value=m;
+  $('L_profA').style.display='none';
+  $('L_profR').style.display='';
+  $('L_profTg')?.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===1));
+  renderCostList('L_costCard',LS,'calcL()');
+  calcL();
+  toast('総額提示案件 にコピーしました');
+}
+
 function newProject(){
   if(!confirm('新規案件を作成しますか？\nすべての入力値・コスト項目がクリアされます。'))return;
   currentProjectId=null;

@@ -89,9 +89,10 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .num-input:focus,.text-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
 .big-input{font-size:1.2rem;font-weight:700;text-align:right}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid-2>.field{min-width:0}
 
-.slider-wrap{display:flex;align-items:center;gap:10px}
-.slider-wrap input[type=range]{flex:1;height:6px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:999px;outline:none}
+.slider-wrap{display:flex;align-items:center;gap:10px;min-width:0}
+.slider-wrap input[type=range]{flex:1 1 0;min-width:0;height:6px;-webkit-appearance:none;appearance:none;background:var(--border);border-radius:999px;outline:none}
 .slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 8px rgba(56,189,248,.35)}
 .slider-wrap input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;border:none}
 .slider-labels{display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-xdim);margin-top:4px}
@@ -349,8 +350,8 @@ tr.current{background:var(--accent-lo)}
   </div>
   <div class="card"><div class="card-title"><span class="badge">施工体制</span></div>
     <div class="grid-2">
-      <div class="field"><label class="field-label">導入人数 <span class="slider-current" id="L_pD">5人</span></label><div class="slider-wrap"><input type="range" min="1" max="30" value="5" id="L_pS" oninput="$('L_pD').textContent=this.value+'人';$('L_pM').value=this.value;calcL()"><input type="number" class="num-input" id="L_pM" value="5" min="1" max="999" style="width:90px;flex:none" oninput="$('L_pS').value=Math.min(+this.value||1,30);$('L_pD').textContent=(this.value||0)+'人';calcL()" onblur="this.value=clamp(this.value||5,1,999);$('L_pS').value=Math.min(+this.value,30);$('L_pD').textContent=this.value+'人';calcL()"></div><div class="field-help">バーは1〜30人。範囲外は数値欄に直接入力（最大999）</div></div>
-      <div class="field"><label class="field-label">実稼働日数 <span class="slider-current" id="L_dD">20日</span></label><div class="slider-wrap"><input type="range" min="1" max="120" value="20" id="L_dS" oninput="$('L_dD').textContent=this.value+'日';$('L_dM').value=this.value;calcL()"><input type="number" class="num-input" id="L_dM" value="20" min="1" max="365" style="width:90px;flex:none" oninput="$('L_dS').value=Math.min(+this.value||1,120);$('L_dD').textContent=(this.value||0)+'日';calcL()" onblur="this.value=clamp(this.value||20,1,365);$('L_dS').value=Math.min(+this.value,120);$('L_dD').textContent=this.value+'日';calcL()"></div><div class="field-help">バーは1〜120日。範囲外は数値欄に直接入力（最大365）</div></div>
+      <div class="field"><label class="field-label">導入人数 <span class="slider-current" id="L_pD">5人</span></label><div class="slider-wrap"><input type="range" min="1" max="30" value="5" id="L_pS" oninput="$('L_pD').textContent=this.value+'人';$('L_pM').value=this.value;calcL()"><input type="number" class="num-input" id="L_pM" value="5" min="1" max="999" style="width:80px;flex:none" oninput="$('L_pS').value=Math.min(+this.value||1,30);$('L_pD').textContent=(this.value||0)+'人';calcL()" onblur="this.value=clamp(this.value||5,1,999);$('L_pS').value=Math.min(+this.value,30);$('L_pD').textContent=this.value+'人';calcL()"></div><div class="field-help">バー: 1〜30人 / 直接入力で最大999</div></div>
+      <div class="field"><label class="field-label">実稼働日数 <span class="slider-current" id="L_dD">20日</span></label><div class="slider-wrap"><input type="range" min="1" max="120" value="20" id="L_dS" oninput="$('L_dD').textContent=this.value+'日';$('L_dM').value=this.value;calcL()"><input type="number" class="num-input" id="L_dM" value="20" min="1" max="365" style="width:80px;flex:none" oninput="$('L_dS').value=Math.min(+this.value||1,120);$('L_dD').textContent=(this.value||0)+'日';calcL()" onblur="this.value=clamp(this.value||20,1,365);$('L_dS').value=Math.min(+this.value,120);$('L_dD').textContent=this.value+'日';calcL()"></div><div class="field-help">バー: 1〜120日 / 直接入力で最大365</div></div>
     </div>
   </div>
   <div class="card" id="L_costCard"></div>

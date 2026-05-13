@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/subscription";
 import { CheckoutButtons } from "./CheckoutButtons";
+import { ManageBillingButton } from "./ManageBillingButton";
 import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const profile = await ensureProfile(supabase, user.id);
   const params = await searchParams;
   const expired = params.reason === "expired";
+
+  // 既に有料プラン契約中 → Stripe Customer Portal でプラン変更/解約。Checkout は隠す。
+  const hasActiveSubscription =
+    (profile.subscription_status === "active" || profile.subscription_status === "canceled")
+    && !!profile.stripe_customer_id;
 
   return (
     <div className="min-h-screen bg-paper bg-blueprint">
@@ -37,28 +43,65 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           </div>
         )}
 
-        <p className="mt-4 text-sm text-ink-2">
-          現在のステータス:{" "}
-          <span className="font-bold">{statusLabel(profile.subscription_status)}</span>
+        {/* 現在のステータス */}
+        <div className="mt-6 p-5 bg-paper-2/60 border border-rule rounded-lg">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-sm text-ink-2">現在のステータス:</span>
+            <span className="font-bold text-ink">{statusLabel(profile.subscription_status)}</span>
+            {profile.subscription_status === "active" && profile.plan && (
+              <span className="bg-emerald-700 text-paper text-xs font-bold px-2 py-0.5 rounded">
+                {profile.plan === "yearly" ? "年額プラン" : "月額プラン"}
+              </span>
+            )}
+            {profile.subscription_status === "canceled" && profile.plan && (
+              <span className="bg-ink-2 text-paper text-xs font-bold px-2 py-0.5 rounded">
+                {profile.plan === "yearly" ? "年額プラン（解約済）" : "月額プラン（解約済）"}
+              </span>
+            )}
+          </div>
           {profile.trial_ends_at && profile.subscription_status === "trialing" && (
-            <span className="ml-2 text-ink-2">
-              （{new Date(profile.trial_ends_at).toLocaleDateString("ja-JP")} まで無料試用）
-            </span>
+            <p className="mt-2 text-sm text-ink-2">
+              無料試用期間: {new Date(profile.trial_ends_at).toLocaleDateString("ja-JP")} まで
+            </p>
           )}
           {profile.current_period_end && (profile.subscription_status === "active" || profile.subscription_status === "canceled") && (
-            <span className="ml-2 text-ink-2">
-              （次回更新: {new Date(profile.current_period_end).toLocaleDateString("ja-JP")}）
-            </span>
+            <p className="mt-2 text-sm text-ink-2">
+              {profile.subscription_status === "canceled"
+                ? `${new Date(profile.current_period_end).toLocaleDateString("ja-JP")} まで利用可能`
+                : `次回更新: ${new Date(profile.current_period_end).toLocaleDateString("ja-JP")}`}
+            </p>
           )}
-        </p>
-
-        <div className="mt-10">
-          <CheckoutButtons />
         </div>
 
-        <p className="mt-8 text-xs text-ink-2">
-          ※ Stripe Checkout に遷移します。お支払い情報の登録・更新・解約はすべて Stripe の安全な画面で行えます。
-        </p>
+        {/* 契約中: Portal でプラン変更・解約 */}
+        {hasActiveSubscription ? (
+          <section className="mt-10 bg-paper border border-rule rounded-lg p-6">
+            <h2 className="font-mincho text-xl font-bold text-ink">
+              プラン変更・解約・お支払い情報
+            </h2>
+            <p className="mt-3 text-sm text-ink-2 leading-relaxed">
+              プランの変更（月額 ⇄ 年額）・解約・クレジットカードの変更・領収書のダウンロードは
+              Stripe のカスタマーポータルから行えます。
+            </p>
+            <p className="mt-2 text-xs text-ink-2 leading-relaxed">
+              ※ 年額プランから月額プランへ切り替えた場合、Stripe が未消化期間を自動で日割り計算し、
+              次回請求から相殺します。差額分の課金や返金は Stripe が自動処理します。
+            </p>
+            <div className="mt-6">
+              <ManageBillingButton />
+            </div>
+          </section>
+        ) : (
+          /* 未契約 or トライアル中: 通常の Checkout */
+          <>
+            <div className="mt-10">
+              <CheckoutButtons />
+            </div>
+            <p className="mt-8 text-xs text-ink-2">
+              ※ Stripe Checkout に遷移します。お支払い情報の登録・更新・解約はすべて Stripe の安全な画面で行えます。
+            </p>
+          </>
+        )}
       </main>
     </div>
   );

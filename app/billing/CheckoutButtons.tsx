@@ -14,8 +14,14 @@ export function CheckoutButtons() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan }),
       });
-      const data = await r.json();
-      if (!r.ok || !data.url) throw new Error(data.error ?? "決済画面の作成に失敗しました");
+      const text = await r.text();
+      let data: { url?: string; error?: string } = {};
+      try { data = text ? JSON.parse(text) : {}; }
+      catch {
+        throw new Error(`サーバが想定外の応答を返しました (HTTP ${r.status}): ${text.slice(0, 200)}`);
+      }
+      if (!r.ok) throw new Error(data.error ?? `HTTP ${r.status}`);
+      if (!data.url) throw new Error("決済画面の URL を取得できませんでした");
       window.location.href = data.url;
     } catch (e) {
       setError((e as Error).message);

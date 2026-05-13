@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/subscription";
 import { CheckoutButtons } from "./CheckoutButtons";
+import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
       <header className="border-b border-rule bg-paper/90 backdrop-blur">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-rust text-2xl leading-none">⚡</span>
+            <TowerIcon size={28} className="text-steel-dark" />
             <span className="font-mincho text-lg font-bold tracking-wider text-ink">TowerSim</span>
           </Link>
           <Link href="/app" className="text-sm text-steel-dark underline">アプリへ戻る</Link>

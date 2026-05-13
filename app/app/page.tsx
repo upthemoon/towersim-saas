@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfile, canAccessApp } from "@/lib/subscription";
 import { SignOutButton } from "./SignOutButton";
+import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
 
@@ -20,21 +21,22 @@ export default async function AppPage() {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* アカウント操作だけの細い帯。アプリ名・キャッチコピーは iframe 内 simulator.html 側で表示。 */}
       <header className="bg-steel-dark text-paper border-b border-steel">
-        <div className="max-w-6xl mx-auto px-4 h-12 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-rust text-xl leading-none">⚡</span>
-            <span className="font-mincho font-bold tracking-wider">TowerSim</span>
+        <div className="max-w-6xl mx-auto px-4 h-9 flex items-center justify-between gap-3 text-xs">
+          <Link href="/" className="flex items-center gap-1.5 text-paper-2 hover:text-paper">
+            <TowerIcon size={16} className="text-paper" />
+            <span className="font-mincho tracking-wider">TowerSim</span>
           </Link>
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3">
             {trialDaysLeft !== null && (
-              <span className="bg-rust text-paper px-2 py-1 rounded">
-                試用期間 残り {trialDaysLeft} 日
+              <span className="bg-rust text-paper px-2 py-0.5 rounded">
+                試用 残り {trialDaysLeft} 日
               </span>
             )}
             {profile.subscription_status === "active" && (
-              <span className="bg-emerald-700 text-paper px-2 py-1 rounded">
-                {profile.plan === "yearly" ? "年額" : "月額"}プラン
+              <span className="bg-emerald-700 text-paper px-2 py-0.5 rounded">
+                {profile.plan === "yearly" ? "年額" : "月額"}
               </span>
             )}
             <Link href="/billing" className="text-paper-2 hover:text-paper underline">

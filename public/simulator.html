@@ -417,6 +417,7 @@ tr.current{background:var(--accent-lo)}
   <div id="L_alert"></div>
   <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価 (余剰/人工)</span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
   <div class="card"><div class="card-title"><span class="badge">コスト内訳</span></div><div class="table-wrap"><table><thead><tr><th>項目</th><th>按分後</th><th>算式</th></tr></thead><tbody id="L_cb"></tbody></table></div></div>
+  <div class="card"><div class="card-title"><span class="badge">契約金額の感度</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">契約金額を変えた時の利益・実質単価の変化</span></div><div class="table-wrap"><table><thead><tr><th>契約金額</th><th>目標利益</th><th>残額 (余剰)</th><th>実質単価/人工</th><th>利益率</th></tr></thead><tbody id="L_sens"></tbody></table></div></div>
   <div class="card"><div class="card-title"><span class="badge">交渉メモ</span></div><div class="memo-box" id="L_memo">入力後に自動生成</div></div>
 </div>
 </div>
@@ -802,6 +803,38 @@ function calcL(){
   $('L_oBE').textContent=md>0?yen(Math.round(beUnitP)):'---';
   $('L_oBER').textContent=yen(Math.round(beRev));
   renderBreakdown('L_cb',cd.rows);
+  /* 契約金額の感度表: 契約金額を変えた時の利益と実質単価 */
+  if(ok&&md>0){
+    const aStep=rev>=80000000?5000000:rev>=20000000?2000000:rev>=8000000?1000000:rev>=2000000?500000:200000;
+    const aSet=new Set([
+      rev-aStep*3,rev-aStep*2,rev-aStep,rev,rev+aStep,rev+aStep*2,rev+aStep*3,
+      Math.round(beRev/aStep)*aStep,Math.round(needRev/aStep)*aStep
+    ].filter(a=>a>0));
+    const aPrices=[...aSet].sort((a,b)=>a-b);
+    $('L_sens').innerHTML=aPrices.map(a=>{
+      const tp_a=LS.profMode==='amt'?tp:Math.round(a*(parseFloat($('L_profR').value)||0)/100);
+      const lab_a=a-cd.total-tp_a;
+      const up_a=md>0?lab_a/md:0;
+      const profitRate=a>0?(a-cd.total)/a:0;
+      const isBE=Math.abs(a-beRev)<aStep/2;
+      const isNeed=Math.abs(a-needRev)<aStep/2;
+      const isCur=a===rev;
+      const outline=(isBE||isNeed)&&!isCur?'outline:1px solid var(--amber);':'';
+      return `<tr${isCur?' class="current"':''} style="${outline}">
+        <td>${yen(a)}
+          ${isCur?'<span class="current-badge">現在</span>':''}
+          ${isBE&&!isCur?'<span class="current-badge" style="background:var(--amber);color:#000">分岐</span>':''}
+          ${isNeed&&!isCur?'<span class="current-badge" style="background:var(--green)">必要</span>':''}
+        </td>
+        <td>${yen(Math.round(tp_a))}</td>
+        <td class="${lab_a>=0?'td-green':'td-red'}">${(lab_a>=0?'+':'')+yen(Math.round(lab_a))}</td>
+        <td class="${up_a>=0?'td-green':'td-red'}">${(up_a>=0?'+':'')+yen(Math.round(up_a))}</td>
+        <td>${pct(profitRate)}</td>
+      </tr>`;
+    }).join('');
+  }else{
+    $('L_sens').innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:14px">契約金額と体制を入力すると感度表が表示されます</td></tr>';
+  }
 
   if(!ok||md<=0){$('L_memo').textContent='入力後に自動生成';return;}
   let m=`【概要】\n売上${yen(rev)} − 経費${yen(Math.round(cd.total))}（福利費込）− 利益${yen(tp)} → 残額${yen(lab)}\n\n【体制】${pp}人×${dd}日＝${fm(md)}人工 → 実質${yen(Math.round(up))}\n\n【比較】要望${yen(rp)}に対し${diff>=0?'+':''}${yen(Math.round(diff))}/人工（${dr>=0?'+':''}${dr.toFixed(1)}%）\n全体${diff>=0?'余裕':'不足'}：${(diff>=0?'+':'')}${yen(Math.round(td))}`;

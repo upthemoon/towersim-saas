@@ -143,7 +143,7 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .badge-direct{color:var(--purple);background:var(--purple-lo);border-color:rgba(167,139,250,.25)}
 .remove-btn{background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;padding:8px;opacity:.75}
 .remove-btn:hover{opacity:1}
-.add-grid{display:grid;grid-template-columns:1.2fr .85fr .85fr 1fr auto;gap:8px;align-items:end}
+.add-grid{display:grid;grid-template-columns:3fr .8fr 1fr 1fr auto;gap:8px;align-items:end}
 .add-btn-el{background:var(--accent-lo);border:1px solid var(--accent);border-radius:10px;color:var(--accent);padding:10px 14px;cursor:pointer;font-weight:700;font-size:.82rem;font-family:var(--font)}
 .auto-calc-badge{font-size:.65rem;color:var(--accent);background:var(--accent-lo);padding:2px 8px;border-radius:999px;margin-left:6px;font-weight:700}
 
@@ -413,7 +413,7 @@ tr.current{background:var(--accent-lo)}
   <div class="card"><div class="card-title">工種</div>
     <div class="field">
       <label class="field-label">工事種別</label>
-      <input type="text" class="text-input" id="S_workType" placeholder="例：土木工事・建築工事・解体工事" list="workTypePresets" oninput="SS.workType=this.value;calcN();calcI()">
+      <input type="text" class="text-input" id="S_workType" placeholder="例：土木工事・建築工事・解体工事" oninput="SS.workType=this.value;calcN();calcI()">
       <details class="preset-details"><summary>候補から選ぶ</summary><div class="preset-chips" id="S_workTypeChips"></div></details>
     </div>
   </div>
@@ -679,7 +679,7 @@ function renderCostCard(elId,state,recalcFn){
       <strong>法定福利費</strong>: 項目名に「人件費・労務・給与・賞与・残業」を含む項目の合計に対して自動計算。
     </div>
     <div id="${elId}_list"></div>
-    <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目 <span style="color:var(--text-xdim);font-weight:400">(候補から選択 or 自由入力)</span></label><div class="input-with-clear"><input class="text-input" id="${elId}_nn" placeholder="例: 燃料費・外注費 etc." list="costNamePresets" oninput="applyCostPreset('${elId}',this.value)"><button type="button" class="input-clear-btn" aria-label="クリア" title="クリアして選び直す" onclick="$('${elId}_nn').value='';$('${elId}_nn').focus()">✕</button></div></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>
+    <div class="add-grid" style="margin-top:8px"><div><label class="field-label">項目 <span style="color:var(--text-xdim);font-weight:400">(候補タブ or 自由入力)</span></label><input class="text-input" id="${elId}_nn" placeholder="例: 燃料費・外注費 等" oninput="applyCostPreset('${elId}',this.value)"></div><div><label class="field-label">金額</label><input type="number" class="num-input" id="${elId}_na" placeholder="0"></div><div><label class="field-label">区分</label><select id="${elId}_nk"><option value="variable">月額変動</option><option value="fixed">月額固定</option><option value="direct">案件直接</option></select></div><div><label class="field-label">按分基準</label><select id="${elId}_nb"><option value="standard">標準</option><option value="actual">実績</option></select></div><div><button class="add-btn-el" onclick="addCostTo('${elId}')">＋</button></div></div>
     <details class="preset-details" style="margin-top:10px"><summary>項目候補から選ぶ (${COST_PRESETS.length}件)</summary><div class="preset-chips">${COST_PRESETS.map(p=>`<button type="button" class="kind-${p.kind}" onclick="pickCostPreset('${elId}_nn','${p.name}','${elId}')">${p.name}</button>`).join('')}</div></details>`;
   renderCostList(elId,state,recalcFn);
 }
@@ -690,7 +690,7 @@ function renderCostList(elId,state,recalcFn){
     const id=Number(c.id)|0;
     const lab=isLaborCost(c);
     const labBadge=lab?'<span class="badge-pill" title="法定福利費の自動計算対象 (項目名に人件費/労務/給与/賞与/残業 を含むと自動)" style="color:var(--accent);background:var(--accent-lo);border-color:var(--accent)">人件費</span>':'';
-    return `<div class="cost-card" data-cost-id="${id}"><button class="remove-btn" aria-label="削除" title="この項目を削除" onclick="rmC('${elId}',${id})">✕</button><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" list="costNamePresets" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div></div><div class="cost-meta">${tb}${labBadge}</div></div>`;
+    return `<div class="cost-card" data-cost-id="${id}"><button class="remove-btn" aria-label="削除" title="この項目を削除" onclick="rmC('${elId}',${id})">✕</button><div class="cost-top"><div><label class="field-label">項目</label><input class="text-input" value="${esc(c.name)}" oninput="updC('${elId}',${id},'name',this.value)"></div><div><label class="field-label">${c.kind==='direct'?'金額':'月額'}</label><input type="number" class="num-input" value="${Number(c.amount)||0}" oninput="updC('${elId}',${id},'amount',this.value)"></div><div><label class="field-label">区分</label><select onchange="updC('${elId}',${id},'kind',this.value)"><option value="variable"${c.kind==='variable'?' selected':''}>変動</option><option value="fixed"${c.kind==='fixed'?' selected':''}>固定</option><option value="direct"${c.kind==='direct'?' selected':''}>直接</option></select></div></div><div class="cost-meta">${tb}${labBadge}</div></div>`;
   }).join('');
 }
 function getStateFor(elId){return elId==='L_costCard'?LS:SS;}

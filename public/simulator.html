@@ -415,9 +415,19 @@ tr.current{background:var(--accent-lo)}
   </div>
 </div>
 <div class="col">
-  <div class="card"><div class="card-title"><span class="badge">単価比較（実質 vs 要望）</span></div>
-    <div class="cmp"><div class="cmp-row"><div class="cmp-l">参考単価（要望）</div><div class="cmp-v blue" id="L_cR">---</div></div><div class="cmp-row"><div class="cmp-l">実質1人工単価</div><div class="cmp-v big" id="L_cA">---</div></div><div class="cmp-divider"></div><div class="cmp-row"><div class="cmp-l">1人工あたり差額</div><div class="cmp-v" id="L_cD">---</div></div><div class="cmp-row"><div class="cmp-l">全体過不足額</div><div class="cmp-v" id="L_cT">---</div></div><div class="cmp-diff" id="L_cRes" style="display:none"><div class="d-label" id="L_cRL"></div><div class="d-val" id="L_cRV"></div><div class="d-sub" id="L_cRS"></div></div></div>
-    <div><div style="font-size:.66rem;color:var(--text-xdim);margin-bottom:5px">充足率（要望=100%）</div><div class="gauge-track"><div class="gauge-fill gg" id="L_gauge" style="width:0%">0%</div></div><div class="gauge-labels"><span>0%</span><span>50%</span><span>100%</span><span>120%</span></div></div>
+  <div class="card"><div class="card-title"><span class="badge">1人工単価の検証</span> <span style="color:var(--text-xdim);font-weight:400;font-size:.75rem">給与水準と業界相場の比較</span></div>
+    <div class="cmp">
+      <div class="cmp-row"><div class="cmp-l">給与 (人件費按分/人工)</div><div class="cmp-v" id="L_cPay">---</div></div>
+      <div class="cmp-row"><div class="cmp-l">＋ 上乗せ余力 (余剰/人工)</div><div class="cmp-v" id="L_cSurp">---</div></div>
+      <div class="cmp-divider"></div>
+      <div class="cmp-row"><div class="cmp-l">＝ 実支給上限 (給与+余力)</div><div class="cmp-v big" id="L_cTotal">---</div></div>
+      <div class="cmp-divider"></div>
+      <div class="cmp-row"><div class="cmp-l">業界相場・希望労務単価</div><div class="cmp-v blue" id="L_cR">---</div></div>
+      <div class="cmp-row"><div class="cmp-l">給与のみ vs 業界相場</div><div class="cmp-v" id="L_cDpay">---</div></div>
+      <div class="cmp-row"><div class="cmp-l">実支給 vs 業界相場</div><div class="cmp-v" id="L_cDtotal">---</div></div>
+      <div class="cmp-diff" id="L_cRes" style="display:none"><div class="d-label" id="L_cRL"></div><div class="d-val" id="L_cRV"></div><div class="d-sub" id="L_cRS"></div></div>
+    </div>
+    <div><div style="font-size:.66rem;color:var(--text-xdim);margin-bottom:5px">業界相場に対する 実支給上限 の充足率</div><div class="gauge-track"><div class="gauge-fill gg" id="L_gauge" style="width:0%">0%</div></div><div class="gauge-labels"><span>0%</span><span>50%</span><span>100%</span><span>120%</span></div></div>
   </div>
   <div id="L_alert"></div>
   <div class="card"><div class="card-title"><span class="badge">算出結果</span></div><div class="kpi-grid" style="grid-template-columns:1fr 1fr"><div class="kpi"><span class="kpi-label">税別売上</span><span class="kpi-value blue" id="L_oR">---</span></div><div class="kpi"><span class="kpi-label">諸経費合計</span><span class="kpi-value orange" id="L_oC">---</span></div><div class="kpi"><span class="kpi-label">目標利益額</span><span class="kpi-value amber" id="L_oP">---</span></div><div class="kpi"><span class="kpi-label">人件費残額 (余剰)</span><span class="kpi-value" id="L_oL">---</span></div><div class="kpi"><span class="kpi-label">総人工数</span><span class="kpi-value" id="L_oM">---</span></div><div class="kpi"><span class="kpi-label">実質1人工単価 (余剰/人工)</span><span class="kpi-value" id="L_oU">---</span></div><div class="kpi"><span class="kpi-label">必要1人工単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oNeed">---</span></div><div class="kpi"><span class="kpi-label">必要売上額 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(目標利益確保)</span></span><span class="kpi-value amber" id="L_oReq">---</span></div><div class="kpi"><span class="kpi-label">損益分岐単価 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBE">---</span></div><div class="kpi"><span class="kpi-label">損益分岐売上 <span style="color:var(--text-xdim);font-weight:400;font-size:.85em">(利益0)</span></span><span class="kpi-value" id="L_oBER">---</span></div></div></div>
@@ -799,13 +809,33 @@ function calcL(){
   const beRev=cd.total;
   const ok=raw>0;
 
-  $('L_cR').textContent=yen(rp)+'/人工';$('L_cA').textContent=ok&&md>0?yen(Math.round(up))+'/人工':'---';$('L_cA').className='cmp-v big '+(diff>=0?'green':dr>=-10?'amber':'red');
-  $('L_cD').textContent=ok&&md>0?(diff>=0?'+':'')+yen(Math.round(diff))+'/人工':'---';$('L_cD').className='cmp-v '+(diff>=0?'green':'red');
-  $('L_cT').textContent=ok&&md>0?(td>=0?'+':'')+yen(Math.round(td)):'---';$('L_cT').className='cmp-v '+(td>=0?'green':'red');
-  const cr=$('L_cRes');if(ok&&md>0){cr.style.display='';if(diff>=0){cr.className='cmp-diff plus';$('L_cRL').textContent='余裕額';$('L_cRV').textContent='+'+yen(Math.round(td));$('L_cRS').textContent=fm(md)+'人工×+'+yen(Math.round(diff));}else{cr.className='cmp-diff minus';$('L_cRL').textContent='不足額（増額必要）';$('L_cRV').textContent=yen(Math.round(Math.abs(td)));$('L_cRS').textContent='必要額（税別）:'+yen(req);}}else cr.style.display='none';
-  const gp=Math.max(0,Math.min(120,fill)),gf=$('L_gauge');gf.style.width=(gp/120*100)+'%';gf.textContent=ok&&md>0?fill.toFixed(0)+'%':'';gf.className='gauge-fill '+(fill>=100?'gg':fill>=90?'gy':'gr');
+  /* 1人工単価の検証: 給与/人工 + 余剰/人工 = 実支給上限 と業界相場の比較 */
+  const payPerU=md>0?cd.labor/md:0;
+  const surplusPerU=md>0?lab/md:0;
+  const totalPerU=payPerU+surplusPerU;
+  const diffPay=payPerU-rp, diffTotal=totalPerU-rp;
+  const drTotal=rp>0?diffTotal/rp*100:0;
+  const fillTotal=rp>0?totalPerU/rp*100:0;
+  $('L_cR').textContent=yen(rp)+'/人工';
+  $('L_cPay').textContent=ok&&md>0?yen(Math.round(payPerU))+'/人工':'---';
+  $('L_cSurp').textContent=ok&&md>0?(surplusPerU>=0?'+':'')+yen(Math.round(surplusPerU))+'/人工':'---';
+  $('L_cSurp').className='cmp-v '+(surplusPerU>=0?'green':'red');
+  $('L_cTotal').textContent=ok&&md>0?yen(Math.round(totalPerU))+'/人工':'---';
+  $('L_cTotal').className='cmp-v big '+(totalPerU>=rp?'green':drTotal>=-10?'amber':'red');
+  $('L_cDpay').textContent=ok&&md>0?(diffPay>=0?'+':'')+yen(Math.round(diffPay))+'/人工':'---';
+  $('L_cDpay').className='cmp-v '+(diffPay>=0?'green':'red');
+  $('L_cDtotal').textContent=ok&&md>0?(diffTotal>=0?'+':'')+yen(Math.round(diffTotal))+'/人工':'---';
+  $('L_cDtotal').className='cmp-v '+(diffTotal>=0?'green':'red');
+  const cr=$('L_cRes');if(ok&&md>0){cr.style.display='';if(diffTotal>=0){cr.className='cmp-diff plus';$('L_cRL').textContent='業界相場 +α (体制全体)';$('L_cRV').textContent='+'+yen(Math.round(diffTotal*md));$('L_cRS').textContent=fm(md)+'人工×+'+yen(Math.round(diffTotal))+' (実支給上限ベース)';}else{cr.className='cmp-diff minus';$('L_cRL').textContent='業界相場に届かず (体制全体)';$('L_cRV').textContent=yen(Math.round(Math.abs(diffTotal*md)));$('L_cRS').textContent=fm(md)+'人工×'+yen(Math.round(diffTotal))+'/人工';}}else cr.style.display='none';
+  const gp=Math.max(0,Math.min(120,fillTotal)),gf=$('L_gauge');gf.style.width=(gp/120*100)+'%';gf.textContent=ok&&md>0?fillTotal.toFixed(0)+'%':'';gf.className='gauge-fill '+(fillTotal>=100?'gg':fillTotal>=90?'gy':'gr');
 
-  let ah='';if(ok&&md>0){if(lab<0)ah=`<div class="alert ar"><h4>🚨 赤字警告</h4>諸経費${yen(Math.round(cd.total))}＋利益${yen(tp)}が売上${yen(rev)}超過<span class="bn red">不足：${yen(Math.abs(lab))}</span></div>`;else if(dr<-10)ah=`<div class="alert ar"><h4>🔴 要交渉</h4>要望比 <strong>${Math.abs(dr).toFixed(1)}%不足</strong><span class="bn red">全体不足：${yen(Math.round(Math.abs(td)))}</span>最低 <strong>+${yen(Math.round(sh))}</strong> → 税別 <strong>${yen(req)}</strong> 以上</div>`;else if(dr<0)ah=`<div class="alert ay"><h4>⚡ 注意</h4>${Math.abs(dr).toFixed(1)}%不足。+${yen(Math.round(sh))}増額、または体制見直し。</div>`;else if(dr<10)ah=`<div class="alert ag"><h4>✅ 適正（余力小）</h4>余力${dr.toFixed(1)}%は限定的。</div>`;}
+  let ah='';if(ok&&md>0){
+    if(lab<0)ah=`<div class="alert ar"><h4>🚨 赤字警告</h4>諸経費${yen(Math.round(cd.total))}＋利益${yen(tp)}が売上${yen(rev)}超過<span class="bn red">不足：${yen(Math.abs(lab))}</span></div>`;
+    else if(diffPay<0&&diffTotal<0)ah=`<div class="alert ar"><h4>🔴 要交渉</h4>給与・上乗せ込みでも業界相場 ${yen(rp)} に届かず<strong>${Math.abs(drTotal).toFixed(1)}%不足</strong><span class="bn red">体制全体：${yen(Math.round(Math.abs(diffTotal*md)))}</span></div>`;
+    else if(diffPay<0&&diffTotal>=0)ah=`<div class="alert ay"><h4>⚡ 注意</h4>給与だけだと業界相場に届かないが、上乗せ余力でカバー (給与${yen(Math.round(payPerU))} + 余力${yen(Math.round(surplusPerU))} = ${yen(Math.round(totalPerU))})</div>`;
+    else if(drTotal>=0&&drTotal<10)ah=`<div class="alert ag"><h4>✅ 適正</h4>業界相場 +${drTotal.toFixed(1)}%。余力は限定的。</div>`;
+    else if(drTotal>=10)ah=`<div class="alert ag"><h4>✅ 良好</h4>業界相場 +${drTotal.toFixed(1)}% で余裕あり。</div>`;
+  }
   $('L_alert').innerHTML=ah;
 
   $('L_oR').textContent=yen(rev);$('L_oC').textContent=yen(Math.round(cd.total));$('L_oP').textContent=yen(tp);$('L_oL').textContent=yen(lab);$('L_oL').className='kpi-value '+(lab<0?'red':'green');$('L_oM').textContent=md>0?fm(md)+' 人工':'---';$('L_oU').textContent=ok&&md>0?yen(Math.round(up)):'---';$('L_oU').className='kpi-value '+(diff>=0?'green':dr>=-10?'amber':'red');

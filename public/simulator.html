@@ -320,12 +320,19 @@ tr.current{background:var(--accent-lo)}
   .print-only .meta{display:grid;grid-template-columns:auto auto auto auto;gap:6px 16px;font-size:9pt;margin-top:8px;color:#333!important}
   .print-only .meta b{color:#000!important}
 }
-@media(max-width:1100px){.app{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}.hero-grid,.info-list{grid-template-columns:1fr}.add-grid{grid-template-columns:1fr 1fr}.cost-top{grid-template-columns:1fr 1fr}}
+@media(max-width:1100px){.app{grid-template-columns:minmax(0,1fr)}.kpi-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.hero-grid,.info-list{grid-template-columns:minmax(0,1fr)}.add-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.cost-top{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
 @media(max-width:700px){
   html{font-size:16px}
-  .header{padding:10px 14px}.toolbar{padding:6px 14px;top:48px}.tab-bar{top:86px;padding:0 14px}.app{padding:12px;gap:14px}.cost-top{grid-template-columns:1fr}
-  .grid-2{grid-template-columns:1fr}
-  .hero-grid{grid-template-columns:1fr}
+  /* モバイル: .header (タイトル+サブ) がデスクトップより縦に伸びるため、
+     sticky 維持で toolbar/tab-bar が背後に隠れる。よってモバイルでは
+     .header と .toolbar の sticky を解除し、.tab-bar (タブ切替) だけを
+     画面上に貼り付ける。これでスクロール時もタブは常に到達可能。 */
+  .header{position:static;padding:10px 14px}
+  .toolbar{position:static;padding:6px 14px}
+  .tab-bar{position:sticky;top:0;padding:0 14px}
+  .app{padding:12px;gap:14px}.cost-top{grid-template-columns:1fr}
+  .grid-2{grid-template-columns:minmax(0,1fr)}
+  .hero-grid{grid-template-columns:minmax(0,1fr)}
   /* カード/間隔の最適化 */
   .card{padding:14px 14px}
   .col{gap:14px}
@@ -399,7 +406,7 @@ tr.current{background:var(--accent-lo)}
 <div class="col">
   <div class="card"><div class="card-title"><span class="badge">契約条件</span></div>
     <div class="field"><label class="field-label">案件名</label><input type="text" class="text-input" id="L_name" placeholder="工事件名"></div>
-    <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label class="field-label" style="margin:0">工事契約金額</label><div class="tg" id="L_taxTg"><button class="on" onclick="LS.taxType='excl';tgSet(this);calcL()">税別</button><button onclick="LS.taxType='incl';tgSet(this);calcL()">税込</button></div></div><input type="text" class="num-input big-input" id="L_amount" placeholder="20,000,000" oninput="fmtIn(this);calcL()"></div>
+    <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label class="field-label" style="margin:0">工事契約金額</label><div class="tg" id="L_taxTg"><button class="on" onclick="LS.taxType='excl';tgSet(this);calcL()">税別</button><button onclick="LS.taxType='incl';tgSet(this);calcL()">税込</button></div></div><input type="text" inputmode="numeric" pattern="[0-9,]*" class="num-input big-input" id="L_amount" placeholder="20,000,000" oninput="fmtIn(this);calcL()" oncompositionstart="this._composing=true" oncompositionend="this._composing=false;fmtIn(this);calcL()"></div>
     <div class="field"><label class="field-label">消費税率 <span class="slider-current" id="L_taxD">10%</span></label><div class="slider-wrap"><input type="range" min="0" max="20" value="10" id="L_tax" oninput="$('L_taxD').textContent=this.value+'%';calcL()"></div></div>
   </div>
   <div class="card"><div class="card-title"><span class="badge">施工体制</span></div>
@@ -411,7 +418,7 @@ tr.current{background:var(--accent-lo)}
   </div>
   <div class="card" id="L_costCard"></div>
   <div class="card"><div class="card-title"><span class="badge">利益目標・参考単価</span></div>
-    <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label class="field-label" style="margin:0">目標利益</label><div class="tg" id="L_profTg"><button class="on" onclick="LS.profMode='amt';tgSet(this);$('L_profA').style.display='';$('L_profR').style.display='none';calcL()">金額</button><button onclick="LS.profMode='rate';tgSet(this);$('L_profA').style.display='none';$('L_profR').style.display='';calcL()">利益率(%)</button></div></div><input type="text" class="num-input" id="L_profA" placeholder="1,000,000" oninput="fmtIn(this);calcL()"><input type="number" class="num-input" id="L_profR" placeholder="10" step="0.5" style="display:none" oninput="calcL()"></div>
+    <div class="field"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><label class="field-label" style="margin:0">目標利益</label><div class="tg" id="L_profTg"><button class="on" onclick="LS.profMode='amt';tgSet(this);$('L_profA').style.display='';$('L_profR').style.display='none';calcL()">金額</button><button onclick="LS.profMode='rate';tgSet(this);$('L_profA').style.display='none';$('L_profR').style.display='';calcL()">利益率(%)</button></div></div><input type="text" inputmode="numeric" pattern="[0-9,]*" class="num-input" id="L_profA" placeholder="1,000,000" oninput="fmtIn(this);calcL()" oncompositionstart="this._composing=true" oncompositionend="this._composing=false;fmtIn(this);calcL()"><input type="number" class="num-input" id="L_profR" placeholder="10" step="0.5" style="display:none" oninput="calcL()"></div>
     <div class="field"><label class="field-label">参考1人工単価（要望単価）<span class="slider-current" id="L_refD">¥35,000</span></label><div class="slider-wrap"><input type="range" min="15000" max="80000" step="1000" value="35000" id="L_ref" oninput="$('L_refD').textContent=yen(+this.value);calcL()"></div><div class="slider-labels"><span>¥15,000</span><span>¥80,000</span></div></div>
   </div>
   <div class="card" style="background:transparent;border-style:dashed">
@@ -585,7 +592,22 @@ const RECALC={
   I_costCard:()=>{calcN();calcI();},
 };
 function recalcOf(elId){return RECALC[elId]||(()=>{});}
-function fmtIn(el){let v=el.value.replace(/[^\d]/g,'');el.value=v?parseInt(v).toLocaleString('ja-JP'):'';}
+function fmtIn(el){
+  // IME 変換中はスキップ (日本語キーボードの数字候補と競合するため)
+  if(el._composing)return;
+  const old=el.value;
+  const cur=el.selectionStart||0;
+  // カーソル位置までの数字数を覚えておく → 整形後にその位置までカーソルを戻す
+  const digitsBeforeCursor=old.slice(0,cur).replace(/[^\d]/g,'').length;
+  const digits=old.replace(/[^\d]/g,'');
+  const next=digits?parseInt(digits).toLocaleString('ja-JP'):'';
+  if(next===old){return;}
+  el.value=next;
+  // カーソル位置を桁数ベースで復元 (カンマ追加でずれた分を補正)
+  let newPos=0,seen=0;
+  for(let i=0;i<next.length;i++){if(/\d/.test(next[i])){seen++;}newPos=i+1;if(seen>=digitsBeforeCursor)break;}
+  try{el.setSelectionRange(newPos,newPos);}catch(_){}
+}
 function tgSet(btn){btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
 function syncSV(sl,iId,dId){$(iId).value=sl.value;$(dId).textContent='¥'+(+sl.value).toLocaleString();}
 function syncNV(inp,sId,dId){$(sId).value=inp.value;$(dId).textContent='¥'+(+inp.value).toLocaleString();}

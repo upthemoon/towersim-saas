@@ -1,3 +1,4 @@
+import type { Viewport } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -6,6 +7,13 @@ import { SignOutButton } from "./SignOutButton";
 import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
+
+// /app は simulator (紺青基調) を全面表示するページなので iOS Safari の
+// 上下ツールバー色 (theme-color) も紺青に揃えてシームレスに見せる。
+// LP / signin / billing は親 layout の古紙色 (#F4EDDC) のまま。
+export const viewport: Viewport = {
+  themeColor: "#1A2B4A",
+};
 
 export default async function AppPage() {
   const supabase = await createSupabaseServerClient();
@@ -20,7 +28,14 @@ export default async function AppPage() {
     : null;
 
   return (
-    <div className="flex flex-col h-screen">
+    <div
+      className="flex flex-col bg-steel-dark"
+      style={{
+        height: "100dvh",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
+    >
       {/* アカウント操作だけの細い帯。アプリ名・キャッチコピーは iframe 内 simulator.html 側で表示。
           simulator.html の `.header-inner` が `padding: 0 22px` で左端に寄せているのでこちらも同じ余白に合わせる。 */}
       <header className="bg-steel-dark text-paper border-b border-steel">

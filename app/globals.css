@@ -30,10 +30,10 @@
 
 html, body { background: var(--paper); color: var(--ink); }
 
-/* iOS Safari / PWA standalone での左右バウンス・水平はみ出しを抑える */
+/* iOS Safari / PWA standalone でのバウンス（左右にピロンと弾むやつ）だけを抑える。
+   overflow-x や touch-action は触らない。横方向の正常なスクロール・パンは許可する。 */
 html, body {
   overscroll-behavior: contain;
-  overflow-x: hidden;
 }
 
 /* 図面方眼背景（セクション装飾用） */

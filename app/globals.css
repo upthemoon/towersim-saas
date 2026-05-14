@@ -30,6 +30,12 @@
 
 html, body { background: var(--paper); color: var(--ink); }
 
+/* iOS Safari / PWA standalone での左右バウンス・水平はみ出しを抑える */
+html, body {
+  overscroll-behavior: contain;
+  overflow-x: hidden;
+}
+
 /* 図面方眼背景（セクション装飾用） */
 .bg-blueprint {
   background-image:

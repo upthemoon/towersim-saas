@@ -34,6 +34,9 @@ export default async function AppPage() {
         height: "100dvh",
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
+        overflow: "hidden",
+        overscrollBehavior: "none",
+        touchAction: "pan-y pinch-zoom",
       }}
     >
       {/* アカウント操作だけの細い帯。アプリ名・キャッチコピーは iframe 内 simulator.html 側で表示。
@@ -66,6 +69,7 @@ export default async function AppPage() {
         src="/simulator.html"
         className="flex-1 w-full border-0"
         title="TowerSim Simulator"
+        style={{ overscrollBehavior: "none", touchAction: "pan-y pinch-zoom" }}
       />
     </div>
   );

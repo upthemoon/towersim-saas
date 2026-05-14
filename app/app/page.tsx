@@ -31,7 +31,13 @@ export default async function AppPage() {
     <div
       className="flex flex-col bg-steel-dark"
       style={{
-        height: "100dvh",
+        // PWA standalone でページ全体がふわふわ動くのを防ぐため fixed で画面に貼り付ける。
+        // body 自体のスクロールが発生しなくなる → ラバーバンドの動きが消える。
+        position: "fixed",
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
         paddingTop: "env(safe-area-inset-top)",
         paddingBottom: "env(safe-area-inset-bottom)",
         overscrollBehavior: "none",

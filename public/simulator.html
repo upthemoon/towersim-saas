@@ -41,8 +41,12 @@
   --header-grad:linear-gradient(160deg,#fbf8ef,#f5f1e8 55%,#efe9d6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:15px;-webkit-text-size-adjust:100%;overscroll-behavior:contain}
-body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;min-height:100vh;overflow-x:hidden;overscroll-behavior:contain}
+/* iOS PWA standalone でページ全体が「ふわふわ」動くのを止める "scroll-lock" パターン:
+   html を画面に固定 (position:fixed)、body を absolute スクロールコンテナにする。
+   こうすると iOS のラバーバンドは body の内側 (= コンテンツ) で吸収され、
+   外枠 (html) ごと動くことは無くなる。 */
+html{font-size:15px;-webkit-text-size-adjust:100%;position:fixed;top:0;right:0;bottom:0;left:0;overflow:hidden;overscroll-behavior:none}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.55;position:absolute;top:0;right:0;bottom:0;left:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:none}
 input[type="number"]{-moz-appearance:textfield}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 
@@ -259,7 +263,9 @@ tr.current{background:var(--accent-lo)}
     --orange:#a04400;--purple:#6d28d9;--purple-lo:#efebfd;
     --header-grad:#fff;
   }
-  body{background:#fff!important;color:#111!important;font-size:10.5pt!important;line-height:1.5}
+  /* 印刷時は scroll-lock を解除し、自然なドキュメントフローに戻す */
+  html{position:static!important;overflow:visible!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important}
+  body{background:#fff!important;color:#111!important;font-size:10.5pt!important;line-height:1.5;position:static!important;overflow:visible!important;inset:auto!important;top:auto!important;right:auto!important;bottom:auto!important;left:auto!important;height:auto!important}
   .formula-box,.memo-box,.proposal-box,.gauge-track{background:#f6f6f6!important;border-color:#999!important;color:#111!important}
   .header,.toolbar,.tab-bar,.btn,.add-btn-el,.remove-btn,.slider-wrap input[type=range],.slider-labels,.slider-current,.modal-overlay,.intro-banner,.theme-toggle,.tg,.toggle-btn,.chip,.field-help,.no-print{display:none!important}
   .app{display:block!important;padding:0!important;max-width:none!important}

@@ -36,6 +36,24 @@ html, body {
   overscroll-behavior: contain;
 }
 
+/* /guide ページ用の最小限タイポグラフィ (Tailwind Typography 未導入のため自前) */
+.guide-prose p { line-height: 1.7; margin: 0 0 1em; }
+.guide-prose ul, .guide-prose ol { margin: 0.5em 0 1em; padding-left: 1.5em; line-height: 1.7; }
+.guide-prose ul { list-style: disc; }
+.guide-prose ol { list-style: decimal; }
+.guide-prose li { margin: 0.25em 0; }
+.guide-prose li::marker { color: var(--steel); }
+.guide-prose code {
+  background: var(--paper-2);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  font-size: 0.9em;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.guide-prose strong { color: var(--ink); font-weight: 700; }
+.guide-prose a { color: var(--rust); text-decoration: underline; text-underline-offset: 3px; }
+
 /* 図面方眼背景（セクション装飾用） */
 .bg-blueprint {
   background-image:

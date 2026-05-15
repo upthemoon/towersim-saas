@@ -62,6 +62,9 @@ export default async function AppPage() {
                 {profile.plan === "yearly" ? "年額" : "月額"}
               </span>
             )}
+            <Link href="/guide" target="_blank" className="text-paper-2 hover:text-paper underline">
+              使い方
+            </Link>
             <Link href="/billing" className="text-paper-2 hover:text-paper underline">
               請求
             </Link>

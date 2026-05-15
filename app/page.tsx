@@ -26,6 +26,9 @@ function Header() {
           </span>
         </Link>
         <nav className="flex items-center gap-4 text-sm">
+          <Link href="/guide" className="text-ink-2 hover:text-ink hidden sm:inline">
+            使い方
+          </Link>
           <Link href="/signin" className="text-ink-2 hover:text-ink">
             ログイン
           </Link>
@@ -268,6 +271,7 @@ function Footer() {
       <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-ink-2">
         <div className="flex flex-wrap items-center gap-6">
           <span className="font-mincho font-bold text-ink">TowerSim</span>
+          <Link href="/guide" className="hover:text-ink">使い方ガイド</Link>
           <Link href="/legal/privacy" className="hover:text-ink">プライバシーポリシー</Link>
           <Link href="/legal/terms" className="hover:text-ink">利用規約</Link>
           <Link href="/legal/tokushoho" className="hover:text-ink">特定商取引法に基づく表記</Link>

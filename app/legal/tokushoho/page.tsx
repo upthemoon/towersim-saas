@@ -16,10 +16,12 @@ export default function TokushohoPage() {
         <table className="w-full mt-8 border-collapse">
           <tbody>
             <Row label="販売事業者">
-              Up the Moon合同会社
+              吉岡 涼（屋号: Up the Moon）
+              <br />
+              <span className="text-sm text-ink-2">※ 2026 年 7 月以降 Up the Moon合同会社に事業譲渡予定</span>
             </Row>
             <Row label="運営統括責任者">
-              吉岡 涼（代表社員）
+              吉岡 涼
             </Row>
             <Row label="所在地">
               請求があった場合に遅滞なく開示します。<br />
@@ -55,6 +57,7 @@ export default function TokushohoPage() {
             <Row label="返品・キャンセル">
               <p>本サービスは、その性質上、ご利用開始後の返金・返品には応じかねます。</p>
               <p>有料プランの解約は、本サービス内の「請求」ページから随時可能です。解約手続きを行った場合、当該契約期間の末日まで本サービスをご利用いただけますが、未使用期間分の日割り返金は行いません。</p>
+              <p className="mt-2">プラン変更（月額 ⇄ 年額）を行った場合は、Stripe Customer Portal の機能により未使用期間分の差額が自動的に日割り精算されます。</p>
               <p className="mt-2 text-sm text-ink-2">※ 試用期間中に解約された場合は、料金は一切発生しません。</p>
             </Row>
             <Row label="動作環境">

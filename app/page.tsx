@@ -8,6 +8,7 @@ export default function Home() {
       <Hero />
       <Problem />
       <Features />
+      <Industries />
       <Pricing />
       <FinalCTA />
       <Footer />
@@ -49,13 +50,13 @@ function Hero() {
     <section className="bg-paper bg-blueprint border-b border-rule">
       <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-[1.4fr_1fr] gap-12 items-center">
         <div>
-          <span className="stamp text-xs">建設業向け SaaS</span>
+          <span className="stamp text-xs">建設業・運送業向け SaaS</span>
           <h1 className="font-mincho text-4xl md:text-5xl font-bold mt-6 leading-tight text-ink">
             原価と交渉、<br />
             <span className="text-rust">紙の感覚</span>でデジタルに。
           </h1>
           <p className="mt-6 text-lg text-ink-2 leading-relaxed">
-            総額提示案件・単価提案（交渉用）・社内採算判定を 1 つのシミュレーターで。<br />
+            総額提示案件・単価交渉・受注可否判断を 1 つのシミュレーターで。<br />
             現場でスマホ、事務所で PC。同じ画面・同じ計算式で、感覚を揃える。
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
@@ -170,9 +171,87 @@ function Features() {
   );
 }
 
+function Industries() {
+  const cases = [
+    {
+      tag: "建設業",
+      title: "工務店・電気工事・送電線鉄塔・土木",
+      lead: "元請からの総額提示・人工単価交渉が日常の現場で。",
+      bullets: [
+        "総額提示された工事が本当に黒字か即判定",
+        "人工単価交渉で「なぜこの単価が必要か」を数字で提示",
+        "法定福利費 16.5% を自動加算、按分も自動",
+        "工種 22 種類の datalist で標準化",
+      ],
+      example: "鉄塔工事 ¥20,000,000 / 5人×20日 → 実質1人工単価 ¥23,300 → 業界相場と比較",
+    },
+    {
+      tag: "運送業",
+      title: "一般貨物・建設運搬・スポット便",
+      lead: "車両費・燃料費・ドライバー人件費を含めた運賃判定に。",
+      bullets: [
+        "案件単価が車両維持コストを回収できるか即判定",
+        "現在運賃 vs 希望運賃の利益差を交渉資料化",
+        "月額固定費 (車両リース・保険・車庫) を案件按分",
+        "燃料費高騰時の必要運賃を逆算",
+      ],
+      example: "1運行 ¥50,000 / 燃料¥8,000・人件費¥18,000・車両按分¥12,000 → 損益分岐運賃判定",
+    },
+    {
+      tag: "その他労務業種",
+      title: "清掃・警備・設備保守・配管・解体",
+      lead: "人件費が原価の中心になる業種すべてに適用可能。",
+      bullets: [
+        "コストカードに変動費・固定費を自由に追加",
+        "業界相場と実支給上限を並べて適正単価検証",
+        "月額按分と案件直接費を分けて把握",
+        "目標利益から逆算した必要単価表示",
+      ],
+      example: "清掃案件 月¥80,000 / 人件費¥50,000・消耗品¥8,000 → 利益率と必要単価表示",
+    },
+  ];
+  return (
+    <section id="industries" className="bg-paper-2 border-y border-rule">
+      <div className="max-w-6xl mx-auto px-6 py-20">
+        <p className="font-mincho text-sm text-rust tracking-widest">— 業 種 別 ケ ー ス —</p>
+        <h2 className="font-mincho text-3xl font-bold mt-2 mb-4 text-ink">
+          建設業で生まれ、<span className="text-rust">運送業にも</span>刺さるツール。
+        </h2>
+        <p className="text-ink-2 mb-12 max-w-3xl leading-relaxed">
+          送電線鉄塔工事の原価管理から始まった TowerSim は、
+          「労務原価が中心の業種」全般に適用可能です。同じ計算ロジックで、業種ごとの数字感覚に合わせて使えます。
+        </p>
+        <div className="grid lg:grid-cols-3 gap-6">
+          {cases.map((c) => (
+            <div key={c.tag} className="bg-paper border border-rule rounded p-6 flex flex-col">
+              <div className="inline-block self-start text-xs font-bold tracking-widest text-rust border border-rust px-2 py-1 rounded mb-3">
+                {c.tag}
+              </div>
+              <h3 className="font-mincho text-lg font-bold text-ink mb-2 leading-snug">{c.title}</h3>
+              <p className="text-sm text-ink-2 mb-4 leading-relaxed">{c.lead}</p>
+              <ul className="space-y-2 text-sm mb-5">
+                {c.bullets.map((b) => (
+                  <li key={b} className="flex items-start">
+                    <span className="text-steel-dark mr-2">▸</span>
+                    <span className="text-ink-2">{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto text-xs text-ink-2 bg-paper-2 border-l-2 border-steel-dark p-3 leading-relaxed">
+                <strong className="text-steel-dark">使用例:</strong><br />
+                {c.example}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Pricing() {
   return (
-    <section id="pricing" className="bg-paper-2 border-y border-rule">
+    <section id="pricing" className="bg-paper border-y border-rule">
       <div className="max-w-5xl mx-auto px-6 py-20">
         <p className="font-mincho text-sm text-rust tracking-widest text-center">— 料 金 プ ラ ン —</p>
         <h2 className="font-mincho text-3xl font-bold mt-2 mb-10 text-ink text-center">

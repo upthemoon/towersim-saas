@@ -11,7 +11,7 @@ export default function PrivacyPage() {
       <LegalHeader />
       <article className="max-w-3xl mx-auto px-6 py-12 text-ink">
         <h1 className="font-mincho text-3xl font-bold">プライバシーポリシー</h1>
-        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月13日</p>
+        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月15日</p>
 
         <p className="mt-6 leading-relaxed">
           Up the Moon合同会社（以下「当社」）は、当社が提供するクラウドサービス「TowerSim」（以下「本サービス」）における利用者の個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。本ポリシーは、本サービスの利用にあたって取得・利用する個人情報の取扱いを規定するものです。

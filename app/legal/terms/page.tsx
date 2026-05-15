@@ -11,7 +11,7 @@ export default function TermsPage() {
       <LegalHeader />
       <article className="max-w-3xl mx-auto px-6 py-12 text-ink">
         <h1 className="font-mincho text-3xl font-bold">利用規約</h1>
-        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月13日</p>
+        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月15日</p>
 
         <p className="mt-6 leading-relaxed">
           本利用規約（以下「本規約」）は、Up the Moon合同会社（以下「当社」）が提供するクラウドサービス「TowerSim」（以下「本サービス」）の利用条件を定めるものです。利用者は本規約に同意のうえ、本サービスを利用するものとします。

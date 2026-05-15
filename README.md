@@ -65,17 +65,6 @@ npm run dev    # http://localhost:3000
 6. Vercel env に Live の 4 つ (`STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRICE_MONTHLY` / `STRIPE_PRICE_YEARLY`) を上書き → 再デプロイ
 7. 自分のアカウントでテスト課金 → Stripe Dashboard で確認 → 即返金 (Live)
 
-## 法人化に伴う事業譲渡 (Phase E, 2026-07 予定)
-
-1. 法人登記完了後、Stripe に **Account Transfer Form** を提出
-   - 個人 Stripe account → 法人 Stripe account
-   - 顧客・契約・支払履歴を引き継ぎ
-2. `/legal/*` の事業者表記を「吉岡 涼（屋号: Up the Moon）」→「Up the Moon合同会社」に置換
-3. プライバシーポリシー・利用規約・特商法表記の事業者名・所在地・代表者名を更新
-4. Supabase / Vercel の請求先・契約者を法人に切替
-5. ドメイン (upthemoon.co.jp) の WHOIS を法人名義に
-6. 既存ユーザーには事業譲渡のお知らせメールを送付（メアド一覧は Supabase auth.users から）
-
 ## トラブル対応
 
 ### Stripe Webhook 失敗

@@ -16,12 +16,10 @@ export default function TokushohoPage() {
         <table className="w-full mt-8 border-collapse">
           <tbody>
             <Row label="販売事業者">
-              吉岡 涼（屋号: Up the Moon）
-              <br />
-              <span className="text-sm text-ink-2">※ 2026 年 7 月以降 Up the Moon合同会社に事業譲渡予定</span>
+              Up the Moon合同会社
             </Row>
             <Row label="運営統括責任者">
-              吉岡 涼
+              吉岡 涼（代表社員）
             </Row>
             <Row label="所在地">
               請求があった場合に遅滞なく開示します。<br />

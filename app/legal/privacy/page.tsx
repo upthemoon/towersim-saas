@@ -14,15 +14,15 @@ export default function PrivacyPage() {
         <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月13日</p>
 
         <p className="mt-6 leading-relaxed">
-          吉岡 涼（屋号: Up the Moon、以下「当方」）は、当方が提供するクラウドサービス「TowerSim」（以下「本サービス」）における利用者の個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。本ポリシーは、本サービスの利用にあたって取得・利用する個人情報の取扱いを規定するものです。なお、2026 年 7 月以降に Up the Moon合同会社へ事業譲渡を予定しており、譲渡時には本ポリシー上の事業者名を変更します。
+          Up the Moon合同会社（以下「当社」）は、当社が提供するクラウドサービス「TowerSim」（以下「本サービス」）における利用者の個人情報の取扱いについて、以下のとおりプライバシーポリシー（以下「本ポリシー」）を定めます。本ポリシーは、本サービスの利用にあたって取得・利用する個人情報の取扱いを規定するものです。
         </p>
 
         <Section title="1. 取得する情報">
-          <p>当方は、本サービスの提供に必要な範囲で以下の情報を取得します。</p>
+          <p>当社は、本サービスの提供に必要な範囲で以下の情報を取得します。</p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
             <li>メールアドレス、表示名</li>
             <li>OAuth 認証時にプロバイダ（Google・Apple 等）から取得する識別子、メールアドレス、氏名</li>
-            <li>クレジットカード情報（決済代行 Stripe, Inc. が直接取得・処理し、当方はカード番号自体を保持しません）</li>
+            <li>クレジットカード情報（決済代行 Stripe, Inc. が直接取得・処理し、当社はカード番号自体を保持しません）</li>
             <li>サブスクリプション状態・契約期間・解約状況</li>
             <li>サービス利用ログ（アクセス日時、IP アドレス、利用デバイス情報）</li>
             <li>本サービス内で利用者が登録・保存した案件データ（シナリオ・計算結果）</li>
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
 
         <Section title="3. 第三者提供">
           <p>
-            当方は、法令に基づく場合を除き、利用者の同意を得ずに個人情報を第三者に提供しません。
+            当社は、法令に基づく場合を除き、利用者の同意を得ずに個人情報を第三者に提供しません。
           </p>
         </Section>
 
@@ -86,7 +86,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="6. 安全管理措置">
-          <p>当方は、個人情報への不正アクセス、紛失、改ざん、漏えい等を防止するため、以下を含む合理的かつ適切な安全管理措置を実施します。</p>
+          <p>当社は、個人情報への不正アクセス、紛失、改ざん、漏えい等を防止するため、以下を含む合理的かつ適切な安全管理措置を実施します。</p>
           <ul className="list-disc pl-6 space-y-1 mt-2">
             <li>通信の暗号化（HTTPS / TLS）</li>
             <li>データベースの行レベルセキュリティ（RLS）による利用者ごとのアクセス制御</li>
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="7. 利用者の権利">
-          <p>利用者は当方に対し、自己の個人情報の開示・訂正・追加・削除・利用停止を請求することができます。請求は <a href="mailto:support@upthemoon.co.jp" className="text-rust underline">support@upthemoon.co.jp</a> までご連絡ください。本人確認のうえ、合理的な期間内に対応します。</p>
+          <p>利用者は当社に対し、自己の個人情報の開示・訂正・追加・削除・利用停止を請求することができます。請求は <a href="mailto:support@upthemoon.co.jp" className="text-rust underline">support@upthemoon.co.jp</a> までご連絡ください。本人確認のうえ、合理的な期間内に対応します。</p>
         </Section>
 
         <Section title="8. Cookie 等">
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
 
         <Section title="10. お問合せ窓口">
           <address className="not-italic">
-            吉岡 涼（屋号: Up the Moon）<br />
+            Up the Moon合同会社<br />
             メール: <a href="mailto:support@upthemoon.co.jp" className="text-rust underline">support@upthemoon.co.jp</a>
           </address>
         </Section>

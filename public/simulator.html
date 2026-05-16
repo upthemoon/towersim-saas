@@ -231,6 +231,13 @@ tr.current{background:var(--accent-lo)}
 
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.show{display:flex}
+.industry-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media(max-width:600px){.industry-grid{grid-template-columns:1fr}}
+.industry-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;transition:all .15s;color:var(--text)}
+.industry-card:hover,.industry-card:focus-visible{border-color:var(--accent);background:var(--accent-lo);transform:translateY(-2px)}
+.industry-icon{font-size:2.2rem;line-height:1}
+.industry-label{font-weight:700;font-size:1.05rem;color:var(--text)}
+.industry-desc{font-size:.78rem;color:var(--text-dim);line-height:1.5}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;max-width:560px;width:100%;max-height:80vh;overflow-y:auto}
 .modal h3{font-size:1rem;margin-bottom:14px}.modal-acts{display:flex;gap:6px;justify-content:flex-end;margin-top:16px}
 .pli{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;transition:.15s}
@@ -380,6 +387,7 @@ tr.current{background:var(--accent-lo)}
   <button class="btn" onclick="exportJSON()">⬇ JSON出力</button>
   <label class="btn" style="cursor:pointer">⬆ JSON読込<input type="file" accept=".json" style="display:none" onchange="importJSON(event)"></label>
   <div class="tb-sep"></div>
+  <button class="theme-toggle" id="industryToggle" onclick="openM('industryModal')" aria-label="業種切替" title="業種切替"><span id="industryIcon">🏗</span></button>
   <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="表示モード切替" title="表示モード切替"><span id="themeIcon">🌙</span></button>
 </div></div>
 
@@ -574,6 +582,30 @@ tr.current{background:var(--accent-lo)}
 <div class="modal-acts"><button class="btn" onclick="closeM('listMod')">閉じる</button></div></div></div>
 <div class="modal-overlay" id="tplMod"><div class="modal"><h3>⚙ コストテンプレート</h3><div id="tplBody"></div><div class="modal-acts"><button class="btn primary" onclick="saveTpl()">現在のコストを保存</button><button class="btn" onclick="closeM('tplMod')">閉じる</button></div></div></div>
 
+<!-- INDUSTRY SELECTION MODAL -->
+<div class="modal-overlay" id="industryModal"><div class="modal" style="max-width:680px">
+  <h3>業種を選んでください</h3>
+  <p style="font-size:.85rem;color:var(--text-dim);margin:-6px 0 14px">選んだ業種に応じて工種候補・コスト候補・サンプル案件が最適化されます。後から「業種切替」ボタンで変更できます。</p>
+  <div class="industry-grid">
+    <button type="button" class="industry-card" onclick="setIndustry('construction')">
+      <span class="industry-icon">🏗</span>
+      <span class="industry-label">建設業</span>
+      <span class="industry-desc">工務店・電気工事・送電線鉄塔・土木<br>元請総額提示・人工単価交渉が日常</span>
+    </button>
+    <button type="button" class="industry-card" onclick="setIndustry('logistics')">
+      <span class="industry-icon">🚛</span>
+      <span class="industry-label">運送業</span>
+      <span class="industry-desc">一般貨物・建設運搬・スポット便<br>車両費・燃料費・ドライバー費の判定</span>
+    </button>
+    <button type="button" class="industry-card" onclick="setIndustry('general')">
+      <span class="industry-icon">🔧</span>
+      <span class="industry-label">その他労務業種</span>
+      <span class="industry-desc">清掃・警備・設備保守・配管<br>人件費が中心の業種に適用可能</span>
+    </button>
+  </div>
+  <div class="modal-acts" style="justify-content:flex-end;margin-top:18px"><button class="btn" id="industryCancelBtn" onclick="closeM('industryModal')" style="display:none">キャンセル</button></div>
+</div></div>
+
 <script>
 /* ═══ HELPERS ═══ */
 const $=id=>document.getElementById(id);
@@ -619,31 +651,84 @@ function applyThemeIcon(){var t=document.documentElement.getAttribute('data-them
 function toggleTheme(){var cur=document.documentElement.getAttribute('data-theme')==='light'?'light':'dark';var next=cur==='light'?'dark':'light';if(next==='light')document.documentElement.setAttribute('data-theme','light');else document.documentElement.removeAttribute('data-theme');try{localStorage.setItem('towerV5_theme',next);}catch(e){}applyThemeIcon();}
 applyThemeIcon();
 
-/* ═══ CONSTANTS ═══ */
-/* 初回サンプル用のデフォルトコスト (一般管理費系=借入返済・光熱費 等は除外し、現場運営に直接関わる項目のみ。
-   直接費はサンプルでは含めず、ユーザーが案件特有のコストを認識して手動追加する設計) */
-const DEF_COSTS=[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'}];
-/* よく使うコスト項目のプリセット (現場運営に直接関わる項目のみ。
-   一般管理費=本社経費系 (家賃・光熱費・借入返済・税金・退職金引当・減価償却費・顧問料)
-   は工事原価ではなく諸経費として別計上すべきなので除外。必要なら手動入力で追加可能。) */
-const COST_PRESETS=[
-  /* 変動費 (月額按分・案件規模で変わる) */
-  {name:'人件費',kind:'variable',base:'standard',isLabor:true},
-  {name:'燃料費',kind:'variable',base:'standard'},
-  {name:'高速代',kind:'variable',base:'standard'},
-  {name:'産廃処分費',kind:'variable',base:'standard'},
-  {name:'出張旅費',kind:'variable',base:'standard'},
-  /* 固定費 (現場運営に関わる毎月発生する経費) */
-  {name:'通信費',kind:'fixed',base:'standard'},
-  {name:'リース料',kind:'fixed',base:'standard'},
-  {name:'保険料',kind:'fixed',base:'standard'},
-  /* 直接費 (案件専用・按分なし) */
-  {name:'材料費',kind:'direct',base:'standard'},
-  {name:'外注費',kind:'direct',base:'standard'},
-  {name:'足場リース',kind:'direct',base:'standard'},
-  {name:'仮設費',kind:'direct',base:'standard'},
-  {name:'運搬費',kind:'direct',base:'standard'},
-];
+/* ═══ INDUSTRY CONFIGS ═══ */
+/* 業種別のサンプル・コスト候補・工種・既定値。
+   起動時に localStorage('towerV5_industry') を読み、未設定なら建設業として動作。
+   業種変更で localStorage を書き換え → ページリロードで適用。 */
+const INDUSTRIES={
+  construction:{
+    label:'建設業',
+    icon:'🏗',
+    description:'元請総額提示・人工単価交渉が日常の現場で',
+    workTypes:['土木工事','建築工事','解体工事','鉄塔工事','送電線工事','配管工事','電気工事','通信工事','防水工事','塗装工事','内装工事','外構工事','仮設工事','設備工事','造園工事','舗装工事','基礎工事','鉄筋工事','型枠工事','コンクリート工事','足場工事','保守点検'],
+    costPresets:[
+      {name:'人件費',kind:'variable',base:'standard',isLabor:true},
+      {name:'燃料費',kind:'variable',base:'standard'},
+      {name:'高速代',kind:'variable',base:'standard'},
+      {name:'産廃処分費',kind:'variable',base:'standard'},
+      {name:'出張旅費',kind:'variable',base:'standard'},
+      {name:'通信費',kind:'fixed',base:'standard'},
+      {name:'リース料',kind:'fixed',base:'standard'},
+      {name:'保険料',kind:'fixed',base:'standard'},
+      {name:'材料費',kind:'direct',base:'standard'},
+      {name:'外注費',kind:'direct',base:'standard'},
+      {name:'足場リース',kind:'direct',base:'standard'},
+      {name:'仮設費',kind:'direct',base:'standard'},
+      {name:'運搬費',kind:'direct',base:'standard'},
+    ],
+    defCosts:[{id:1,name:'人件費',amount:4000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:500000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:300000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'}],
+    sample:{name:'サンプル：鉄塔工事10基',amount:20000000},
+  },
+  logistics:{
+    label:'運送業',
+    icon:'🚛',
+    description:'車両費・燃料費・ドライバー人件費を含めた運賃判定に',
+    workTypes:['一般貨物','建設運搬','スポット便','定期便','長距離輸送','近距離配送','チャーター便','混載便','引越し配送','重機運搬'],
+    costPresets:[
+      {name:'ドライバー人件費',kind:'variable',base:'standard',isLabor:true},
+      {name:'燃料費',kind:'variable',base:'standard'},
+      {name:'高速代',kind:'variable',base:'standard'},
+      {name:'車両修繕費',kind:'variable',base:'standard'},
+      {name:'タイヤ代',kind:'variable',base:'standard'},
+      {name:'車両リース',kind:'fixed',base:'standard'},
+      {name:'車庫代',kind:'fixed',base:'standard'},
+      {name:'保険料',kind:'fixed',base:'standard'},
+      {name:'自動車税',kind:'fixed',base:'standard'},
+      {name:'通行料',kind:'direct',base:'standard'},
+      {name:'荷役費',kind:'direct',base:'standard'},
+      {name:'積込み補助',kind:'direct',base:'standard'},
+    ],
+    defCosts:[{id:1,name:'ドライバー人件費',amount:3000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'燃料費',amount:800000,kind:'variable',base:'standard'},{id:3,name:'高速代',amount:200000,kind:'variable',base:'standard'},{id:4,name:'車両リース',amount:300000,kind:'fixed',base:'standard'}],
+    sample:{name:'サンプル：建設運搬 1か月分',amount:5000000},
+  },
+  general:{
+    label:'その他労務業種',
+    icon:'🔧',
+    description:'清掃・警備・設備保守など人件費中心の業種',
+    workTypes:['清掃業務','警備業務','設備保守','配管修理','解体作業','一般役務','点検業務','メンテナンス'],
+    costPresets:[
+      {name:'人件費',kind:'variable',base:'standard',isLabor:true},
+      {name:'消耗品費',kind:'variable',base:'standard'},
+      {name:'交通費',kind:'variable',base:'standard'},
+      {name:'通信費',kind:'fixed',base:'standard'},
+      {name:'保険料',kind:'fixed',base:'standard'},
+      {name:'リース料',kind:'fixed',base:'standard'},
+      {name:'材料費',kind:'direct',base:'standard'},
+      {name:'外注費',kind:'direct',base:'standard'},
+    ],
+    defCosts:[{id:1,name:'人件費',amount:3000000,kind:'variable',base:'standard',isLabor:true},{id:2,name:'消耗品費',amount:200000,kind:'variable',base:'standard'},{id:3,name:'交通費',amount:100000,kind:'variable',base:'standard'},{id:4,name:'通信費',amount:50000,kind:'fixed',base:'standard'}],
+    sample:{name:'サンプル：1か月分の業務',amount:3000000},
+  },
+};
+const INDUSTRY_KEY='towerV5_industry';
+function getIndustry(){try{const v=localStorage.getItem(INDUSTRY_KEY);if(v&&INDUSTRIES[v])return v;}catch(e){}return 'construction';}
+function setIndustry(key){if(!INDUSTRIES[key])return;try{localStorage.setItem(INDUSTRY_KEY,key);}catch(e){}closeM('industryModal');location.reload();}
+const CURRENT_INDUSTRY=getIndustry();
+const INDUSTRY=INDUSTRIES[CURRENT_INDUSTRY];
+
+/* ═══ CONSTANTS (業種で切替) ═══ */
+const DEF_COSTS=INDUSTRY.defCosts.map(c=>({...c}));
+const COST_PRESETS=INDUSTRY.costPresets.slice();
 function findCostPreset(name){return COST_PRESETS.find(p=>p.name===name);}
 function applyCostPreset(elId,name){
   const p=findCostPreset((name||'').trim());
@@ -651,8 +736,8 @@ function applyCostPreset(elId,name){
   if(p.kind)$(elId+'_nk').value=p.kind;
   if(p.base)$(elId+'_nb').value=p.base;
 }
-/* 工事種別 標準候補 (建設業の一般的な工種) */
-const WORKTYPE_PRESETS=['土木工事','建築工事','解体工事','鉄塔工事','送電線工事','配管工事','電気工事','通信工事','防水工事','塗装工事','内装工事','外構工事','仮設工事','設備工事','造園工事','舗装工事','基礎工事','鉄筋工事','型枠工事','コンクリート工事','足場工事','保守点検'];
+/* 工種 標準候補 (業種で切替) */
+const WORKTYPE_PRESETS=INDUSTRY.workTypes.slice();
 /* 静的に datalist を document に追加 */
 (function injectDatalist(){
   if(!document.getElementById('costNamePresets')){
@@ -1475,8 +1560,8 @@ function delTpl(i){if(!confirm('削除？'))return;const t=loadTpls();t.splice(i
 /* ═══ INTRO (first-time sample scenario) ═══ */
 const INTRO_KEY='towerV5_intro_seen';
 function loadSample(){
-  $('L_name').value='サンプル：鉄塔工事10基';
-  $('L_amount').value=(20000000).toLocaleString('ja-JP');
+  $('L_name').value=INDUSTRY.sample.name;
+  $('L_amount').value=INDUSTRY.sample.amount.toLocaleString('ja-JP');
   $('tbName').textContent='サンプル案件';
   $('introBanner').classList.add('show');
 }
@@ -1494,13 +1579,26 @@ renderWT();renderCM_shared();
   const el=$('S_workTypeChips');
   if(el)el.innerHTML=WORKTYPE_PRESETS.map(n=>`<button type="button" onclick="pickWorkType('${n}')">${n}</button>`).join('');
 })();
+// Apply industry icon to toolbar button
+(function applyIndustryIcon(){const el=$('industryIcon');if(el)el.textContent=INDUSTRY.icon;const btn=$('industryToggle');if(btn)btn.title='業種切替 (現在: '+INDUSTRY.label+')';})();
+
 // Restore last project
 const lastId=localStorage.getItem(LAST_KEY);
 const introSeen=(()=>{try{return localStorage.getItem(INTRO_KEY)==='1';}catch{return false;}})();
+const industryChosen=(()=>{try{return !!localStorage.getItem(INDUSTRY_KEY);}catch{return false;}})();
 const hasSavedProjects=loadAll().length>0;
 if(lastId){const all=loadAll();const p=all.find(x=>x.id===lastId);if(p){currentProjectId=lastId;applyAll(p.data);$('tbName').textContent=p.name;}else{calcL();calcN();calcI();}}
 else if(!introSeen&&!hasSavedProjects){loadSample();calcL();calcN();calcI();}
 else{calcL();calcN();calcI();}
+// 初回ユーザー: 業種未選択 + サンプル未閲覧 + 保存案件なし → 業種選択モーダルを最優先で表示
+if(!industryChosen&&!introSeen&&!hasSavedProjects){
+  // Hide intro banner so the user picks industry first
+  const ib=$('introBanner');if(ib)ib.classList.remove('show');
+  setTimeout(()=>{openM('industryModal');},150);
+}else{
+  // 既存ユーザー: モーダルを開いた時にキャンセル可能に
+  const cb=$('industryCancelBtn');if(cb)cb.style.display='';
+}
 </script>
 </body>
 </html>

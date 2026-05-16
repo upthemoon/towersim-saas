@@ -98,15 +98,18 @@ export function SigninForm() {
         <div className="flex-1 h-px bg-rule" />
       </div>
 
-      <form onSubmit={handleEmail} className="space-y-3">
+      <form onSubmit={handleEmail} className="space-y-3" method="post" action="#">
         <input
           type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
           placeholder="メールアドレス"
+          name="email" id="email" autoComplete="email" inputMode="email" autoCapitalize="off" autoCorrect="off" spellCheck={false}
           className="w-full border border-rule bg-paper px-4 py-3 rounded text-sm focus:outline-none focus:border-steel-dark"
         />
         <input
           type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
           placeholder="パスワード（8文字以上）"
+          name="password" id="password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
           className="w-full border border-rule bg-paper px-4 py-3 rounded text-sm focus:outline-none focus:border-steel-dark"
         />
         {error && <p className="text-sm text-rust">{error}</p>}

@@ -5,13 +5,13 @@
 //   - API/auth routes: network-only (never cache)
 //   - cross-origin: network-only (Supabase, Stripe, Google Fonts handled by browser)
 
-const CACHE_VERSION = "towersim-v1";
+const CACHE_VERSION = "towersim-v2";
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const PRECACHE = `${CACHE_VERSION}-precache`;
 
+// /simulator は認可ゲート配下なのでオフライン precache しない (解約後・未ログインで使えてしまう穴を塞ぐ)。
 const PRECACHE_URLS = [
   "/",
-  "/simulator.html",
   "/icon.svg",
   "/icon-maskable.svg",
   "/manifest.webmanifest",
@@ -21,6 +21,9 @@ const PRECACHE_URLS = [
 const NO_CACHE_PATHS = [
   "/api/",
   "/auth/",
+  "/simulator",
+  "/app",
+  "/billing",
 ];
 
 self.addEventListener("install", (event) => {

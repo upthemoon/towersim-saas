@@ -40,7 +40,9 @@ export async function updateSession(request: NextRequest) {
     url.pathname === "/app" ||
     url.pathname.startsWith("/app/") ||
     url.pathname === "/billing" ||
-    url.pathname.startsWith("/billing/");
+    url.pathname.startsWith("/billing/") ||
+    url.pathname === "/simulator" ||
+    url.pathname.startsWith("/simulator/");
   if (isProtected && !user) {
     const signin = url.clone();
     signin.pathname = "/signin";

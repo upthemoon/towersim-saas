@@ -73,7 +73,7 @@ export default async function AppPage() {
         </div>
       </header>
       <iframe
-        src="/simulator.html"
+        src="/simulator"
         className="flex-1 w-full border-0"
         title="TowerSim Simulator"
         style={{ overscrollBehavior: "none" }}

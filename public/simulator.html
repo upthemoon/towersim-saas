@@ -382,6 +382,7 @@ tr.current{background:var(--accent-lo)}
   <button class="btn" onclick="newProject()">📄 新規</button>
   <div class="tb-sep"></div>
   <button class="btn" onclick="exportPDF()">🖨 PDF出力</button>
+  <button class="btn" onclick="exportQuotePDF()">📋 見積書</button>
   <button class="btn" onclick="showTplModal()">⚙ コストテンプレ</button>
   <div class="tb-sep"></div>
   <button class="btn" onclick="exportJSON()">⬇ JSON出力</button>
@@ -1457,6 +1458,178 @@ function exportPDF(){
   document.title='【統合】'+name+' - '+new Date().toLocaleDateString('ja-JP');
   window.print();
   document.title=prevTitle;
+}
+
+/* ═══ 見積書 PDF (Tab 1 のデータから顧客提出向け見積書を生成) ═══ */
+const ISSUER_KEY='towerV5_issuer';
+function getIssuerInfo(){
+  try{return JSON.parse(localStorage.getItem(ISSUER_KEY)||'{}');}catch{return {};}
+}
+function saveIssuerInfo(info){
+  try{localStorage.setItem(ISSUER_KEY,JSON.stringify(info));}catch{}
+}
+function promptIssuerInfo(){
+  const cur=getIssuerInfo();
+  const companyName=prompt('発行者: 会社名 (例: ○○株式会社)',cur.companyName||'');
+  if(companyName===null)return null;
+  if(!companyName.trim()){alert('会社名は必須です');return null;}
+  const address=prompt('発行者: 住所',cur.address||'');
+  if(address===null)return null;
+  const phone=prompt('発行者: 電話番号',cur.phone||'');
+  if(phone===null)return null;
+  const email=prompt('発行者: メール',cur.email||'');
+  if(email===null)return null;
+  const info={companyName:companyName.trim(),address:(address||'').trim(),phone:(phone||'').trim(),email:(email||'').trim()};
+  saveIssuerInfo(info);
+  return info;
+}
+function exportQuotePDF(){
+  let issuer=getIssuerInfo();
+  if(!issuer.companyName){
+    alert('初回は発行者情報を入力してください (会社名・住所・電話・メール)。設定は保存され、次回以降は省略されます。');
+    issuer=promptIssuerInfo();
+    if(!issuer)return;
+  }
+  const customerName=prompt('お見積宛先 (例: ○○建設株式会社)','')||'';
+  if(!customerName.trim()){alert('宛先を入力してください');return;}
+
+  /* 最新化 */
+  try{calcL();}catch(e){}
+  const projectName=$('L_name').value||$('tbName').textContent||'未設定案件';
+  const workType=$('S_workType').value||'';
+  const ppl=+($('L_pM').value)||0,days=+($('L_dM').value)||0,totalManku=ppl*days;
+  const taxR=(+$('L_tax').value||10)/100;
+  const rawAmount=pn($('L_amount').value);
+  const revExcl=LS.taxType==='incl'?Math.round(rawAmount/(1+taxR)):rawAmount;
+  const taxAmt=Math.round(revExcl*taxR);
+  const totalIncl=revExcl+taxAmt;
+  const sDays=+($('L_sDays')?.value)||20;
+  const cd=calcCosts(LS.costs,LS.siRate,days,sDays,sDays);
+  let profit=0;
+  if(LS.profMode==='amt')profit=pn($('L_profA').value);
+  else profit=Math.round(revExcl*(parseFloat($('L_profR').value)||0)/100);
+
+  const today=new Date();
+  const issueDate=today.toLocaleDateString('ja-JP');
+  const expireDate=new Date(today.getTime()+30*24*60*60*1000).toLocaleDateString('ja-JP');
+  const yyyymmdd=today.toISOString().slice(0,10).replace(/-/g,'');
+  const quoteNo='Q-'+yyyymmdd+'-'+Math.floor(Math.random()*9000+1000);
+
+  /* 内訳行: コストの rows をそのまま使う + 利益 + 小計 + 税 + 合計 */
+  const breakdownRows=cd.rows.filter(r=>!r.current&&r.allocated>0).map(r=>{
+    const indent=r.auto?20:0;
+    return `<tr><td style="padding-left:${indent}px">${esc(r.name)}${r.auto?' <span style="color:#888;font-size:9px">(自動)</span>':''}</td><td class="num">¥${Math.round(r.allocated).toLocaleString('ja-JP')}</td></tr>`;
+  }).join('');
+  const profitRow=profit>0?`<tr><td>目標利益</td><td class="num">¥${profit.toLocaleString('ja-JP')}</td></tr>`:'';
+
+  const html=`<!DOCTYPE html><html lang="ja"><head>
+<meta charset="utf-8">
+<title>見積書 - ${esc(projectName)}</title>
+<style>
+@page { size: A4 portrait; margin: 16mm 14mm; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Hiragino Mincho ProN','Yu Mincho','YuMincho',serif; font-size: 11px; color: #1a1a2e; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0 4mm; }
+.title { font-size: 28px; text-align: center; letter-spacing: 18px; font-weight: 900; margin: 20px 0 24px; padding-bottom: 14px; border-bottom: 2px solid #1a1a2e; }
+.head-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.head-customer { font-size: 22px; font-weight: 700; border-bottom: 1.5px solid #1a1a2e; padding: 4px 16px 4px 0; display: inline-block; min-width: 260px; }
+.head-customer::after { content: ' 御中'; font-size: 14px; font-weight: 400; margin-left: 6px; }
+.head-greet { font-size: 11px; color: #555; margin-top: 10px; }
+.head-right { text-align: right; font-size: 11px; line-height: 1.8; }
+.amount-box { text-align: center; margin: 24px 0; padding: 18px 0; border: 2.5px solid #1a1a2e; border-radius: 6px; }
+.amount-label { font-size: 13px; letter-spacing: 8px; color: #555; }
+.amount-value { font-size: 32px; font-weight: 900; margin-top: 6px; color: #1a1a2e; }
+.amount-tax { font-size: 11px; color: #666; margin-top: 6px; }
+.spec-table, .breakdown-table { width: 100%; border-collapse: collapse; margin: 14px 0; }
+.spec-table th, .spec-table td, .breakdown-table th, .breakdown-table td { border: 0.7px solid #999; padding: 7px 12px; font-size: 11px; }
+.spec-table th { background: #f0f0f0; text-align: left; width: 28%; font-weight: 700; }
+.breakdown-table thead th { background: #1a1a2e; color: #fff; padding: 8px 12px; }
+.breakdown-table td.num { text-align: right; font-family: 'SF Mono',Menlo,monospace; white-space: nowrap; }
+.breakdown-table tr.total { background: #1a1a2e; color: #fff; }
+.breakdown-table tr.total td { font-size: 14px; font-weight: 700; }
+.breakdown-table tr.subtotal { background: #e8ecf4; font-weight: 700; }
+.notes { margin-top: 18px; font-size: 10px; color: #555; line-height: 1.7; padding: 10px 14px; background: #fef9f3; border-left: 3px solid #fbbf24; border-radius: 0 4px 4px 0; }
+.publisher { margin-top: 32px; border-top: 1px solid #999; padding-top: 16px; position: relative; min-height: 100px; }
+.publisher h3 { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.publisher p { font-size: 11px; line-height: 1.7; color: #444; }
+.stamp { position: absolute; top: 16px; right: 0; width: 70px; height: 70px; border: 1.5px solid #999; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; border-radius: 4px; }
+.foot { margin-top: 20px; text-align: center; font-size: 9px; color: #999; }
+@media print { .no-print { display: none !important; } }
+.no-print { position: fixed; top: 10px; right: 10px; background: #fff; border: 1px solid #999; border-radius: 6px; padding: 8px; display: flex; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.no-print button { font-size: 12px; padding: 6px 12px; cursor: pointer; border-radius: 4px; border: 1px solid #999; background: #fff; }
+.no-print button.primary { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="primary" onclick="window.print()">🖨 印刷 / PDF 保存</button>
+  <button onclick="window.close()">閉じる</button>
+</div>
+
+<div class="title">御 見 積 書</div>
+
+<div class="head-row">
+  <div class="head-left">
+    <div class="head-customer">${esc(customerName)}</div>
+    <div class="head-greet">下記の通り御見積申し上げます。</div>
+  </div>
+  <div class="head-right">
+    <div>No. ${esc(quoteNo)}</div>
+    <div>発行日: ${esc(issueDate)}</div>
+    <div>有効期限: ${esc(expireDate)}</div>
+  </div>
+</div>
+
+<div class="amount-box">
+  <div class="amount-label">御 見 積 金 額</div>
+  <div class="amount-value">¥${totalIncl.toLocaleString('ja-JP')}</div>
+  <div class="amount-tax">(税込) ※ 税別 ¥${revExcl.toLocaleString('ja-JP')} / 消費税 (${(taxR*100).toFixed(0)}%) ¥${taxAmt.toLocaleString('ja-JP')}</div>
+</div>
+
+<table class="spec-table">
+  <tr><th>件名</th><td>${esc(projectName)}</td></tr>
+  ${workType?`<tr><th>工種</th><td>${esc(workType)}</td></tr>`:''}
+  <tr><th>体制</th><td>${ppl}名 × ${days}日 (${totalManku} 人工)</td></tr>
+  <tr><th>支払条件</th><td>月末締め翌月末払 (応相談)</td></tr>
+  <tr><th>納期</th><td>協議のうえ決定</td></tr>
+</table>
+
+<table class="breakdown-table">
+  <thead><tr><th>内訳</th><th style="text-align:right;width:28%">金額</th></tr></thead>
+  <tbody>
+    ${breakdownRows}
+    ${profitRow}
+    <tr class="subtotal"><td>小計 (税別)</td><td class="num">¥${revExcl.toLocaleString('ja-JP')}</td></tr>
+    <tr><td>消費税 (${(taxR*100).toFixed(0)}%)</td><td class="num">¥${taxAmt.toLocaleString('ja-JP')}</td></tr>
+    <tr class="total"><td>合計 (税込)</td><td class="num">¥${totalIncl.toLocaleString('ja-JP')}</td></tr>
+  </tbody>
+</table>
+
+<div class="notes">
+  <b>備考</b><br>
+  ・本見積は現時点での想定に基づく概算です。仕様変更等により金額が増減する場合があります。<br>
+  ・有効期限経過後の発注は再見積となります。<br>
+  ・支払条件・納期等は別途協議のうえ決定いたします。
+</div>
+
+<div class="publisher">
+  <div class="stamp">印</div>
+  <div>
+    <h3>${esc(issuer.companyName)}</h3>
+    ${issuer.address?`<p>${esc(issuer.address)}</p>`:''}
+    ${issuer.phone?`<p>TEL: ${esc(issuer.phone)}</p>`:''}
+    ${issuer.email?`<p>Email: ${esc(issuer.email)}</p>`:''}
+  </div>
+</div>
+
+<div class="foot">Generated by TowerSim (towersim.upthemoon.co.jp)</div>
+
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){alert('ポップアップがブロックされました。ブラウザ設定でこのサイトのポップアップを許可してください。');return;}
+  w.document.write(html);
+  w.document.close();
 }
 
 /* ═══ JSON ═══ */

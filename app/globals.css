@@ -52,7 +52,7 @@ html, body {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
 }
 .guide-prose strong { color: var(--ink); font-weight: 700; }
-.guide-prose a { color: var(--rust); text-decoration: underline; text-underline-offset: 3px; }
+.guide-prose p a, .guide-prose li a { color: var(--rust); text-decoration: underline; text-underline-offset: 3px; }
 
 /* 図面方眼背景（セクション装飾用） */
 .bg-blueprint {

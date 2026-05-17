@@ -59,18 +59,12 @@ function Hero() {
             総額提示案件・単価交渉・受注可否判断を 1 つのシミュレーターで。<br />
             現場でスマホ、事務所で PC。同じ画面・同じ計算式で、感覚を揃える。
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="mt-8">
             <Link
               href="/signin?mode=signup"
-              className="bg-rust text-paper px-6 py-3 rounded font-bold hover:bg-rust-dark transition"
+              className="inline-block bg-rust text-paper px-8 py-4 rounded font-bold text-lg hover:bg-rust-dark transition shadow-md"
             >
               7日間 無料で試す
-            </Link>
-            <Link
-              href="#pricing"
-              className="border-2 border-ink text-ink px-6 py-3 rounded font-bold hover:bg-ink hover:text-paper transition"
-            >
-              料金を見る
             </Link>
           </div>
           <p className="mt-4 text-xs text-ink-2">

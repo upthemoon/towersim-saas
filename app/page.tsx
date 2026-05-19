@@ -59,16 +59,18 @@ function Hero() {
             総額提示案件・単価交渉・受注可否判断を 1 つのシミュレーターで。<br />
             現場でスマホ、事務所で PC。同じ画面・同じ計算式で、感覚を揃える。
           </p>
+          {/* LAUNCH_PREP_MODE: T番号 (適格請求書発行事業者登録番号) 取得まで本格営業を控える期間 (~2026年7月予定)
+              復帰手順: project_towersim.md 参照 / 元のリンクは href="/signin?mode=signup" + "7日間 無料で試す" */}
           <div className="mt-8">
-            <Link
-              href="/signin?mode=signup"
+            <a
+              href="mailto:support@upthemoon.co.jp?subject=TowerSim%20%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E5%B8%8C%E6%9C%9B"
               className="inline-block bg-rust text-paper px-8 py-4 rounded font-bold text-lg hover:bg-rust-dark transition shadow-md"
             >
-              7日間 無料で試す
-            </Link>
+              アーリーアクセスを申し込む
+            </a>
           </div>
           <p className="mt-4 text-xs text-ink-2">
-            ※ 試用期間中はクレジットカード登録不要です。
+            ※ 現在、適格請求書発行事業者登録の手続中です。正式リリースは 2026 年 7 月予定。
           </p>
         </div>
 
@@ -248,9 +250,27 @@ function Pricing() {
     <section id="pricing" className="bg-paper border-y border-rule">
       <div className="max-w-5xl mx-auto px-6 py-20">
         <p className="font-mincho text-sm text-rust tracking-widest text-center">— 料 金 プ ラ ン —</p>
-        <h2 className="font-mincho text-3xl font-bold mt-2 mb-10 text-ink text-center">
+        <h2 className="font-mincho text-3xl font-bold mt-2 mb-6 text-ink text-center">
           シンプルな1プランから。
         </h2>
+
+        {/* LAUNCH_PREP_MODE: T番号取得まで本格営業を控える期間 (~2026年7月予定)
+            T番号取得後にこのバナーを削除して mt-2 mb-6 → mt-2 mb-10 に戻す */}
+        <div className="max-w-3xl mx-auto mb-10 p-5 bg-rust/10 border-l-4 border-rust rounded-r">
+          <p className="font-bold text-ink mb-2">📅 正式リリース準備中</p>
+          <p className="text-sm text-ink-2 leading-relaxed">
+            適格請求書発行事業者登録 (インボイス制度) の手続中につき、現在は新規お申し込みを一時停止しております。<br />
+            正式リリース予定: <strong className="text-ink">2026 年 7 月</strong><br />
+            アーリーアクセスご希望の方は{" "}
+            <a
+              href="mailto:support@upthemoon.co.jp?subject=TowerSim%20%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E5%B8%8C%E6%9C%9B"
+              className="text-rust font-bold underline hover:text-rust-dark"
+            >
+              support@upthemoon.co.jp
+            </a>
+            {" "}までお問い合わせください。
+          </p>
+        </div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           <PricingCard
@@ -258,7 +278,7 @@ function Pricing() {
             price="¥3,000"
             unit="/月"
             features={["全機能利用可能", "PDF/JSON 出力無制限", "メールサポート"]}
-            ctaLabel="月額で始める"
+            ctaLabel="アーリーアクセスを申し込む"
           />
           <PricingCard
             title="年額プラン"
@@ -266,7 +286,7 @@ function Pricing() {
             unit="/年"
             badge="17% お得"
             features={["全機能利用可能", "PDF/JSON 出力無制限", "メールサポート", "月換算 ¥2,500"]}
-            ctaLabel="年額で始める"
+            ctaLabel="アーリーアクセスを申し込む"
             highlighted
           />
         </div>
@@ -305,14 +325,16 @@ function PricingCard({
           </li>
         ))}
       </ul>
-      <Link
-        href="/signin?mode=signup"
+      {/* LAUNCH_PREP_MODE: T番号取得まで本格営業を控える期間 (~2026年7月予定)
+          T番号取得後に href を "/signin?mode=signup" に戻す + ctaLabel を「月額で始める」「年額で始める」に戻す */}
+      <a
+        href="mailto:support@upthemoon.co.jp?subject=TowerSim%20%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E5%B8%8C%E6%9C%9B"
         className={`block text-center mt-8 px-5 py-3 rounded font-bold transition ${
           highlighted ? "bg-rust text-paper hover:bg-rust-dark" : "border-2 border-steel-dark text-steel-dark hover:bg-steel-dark hover:text-paper"
         }`}
       >
         {ctaLabel}
-      </Link>
+      </a>
     </div>
   );
 }
@@ -327,12 +349,17 @@ function FinalCTA() {
         <p className="mt-4 text-paper-2/80">
           数字を入れて、計算結果を見て、判断の感覚を共有できる SaaS。
         </p>
-        <Link
-          href="/signin?mode=signup"
+        {/* LAUNCH_PREP_MODE: T番号取得まで本格営業を控える期間 (~2026年7月予定)
+            復帰時に href="/signin?mode=signup" + "7日間 無料で試す" に戻す */}
+        <a
+          href="mailto:support@upthemoon.co.jp?subject=TowerSim%20%E3%82%A2%E3%83%BC%E3%83%AA%E3%83%BC%E3%82%A2%E3%82%AF%E3%82%BB%E3%82%B9%E5%B8%8C%E6%9C%9B"
           className="inline-block mt-8 bg-rust text-paper px-8 py-4 rounded font-bold hover:bg-rust-dark transition"
         >
-          7日間 無料で試す
-        </Link>
+          アーリーアクセスを申し込む
+        </a>
+        <p className="mt-4 text-xs text-paper-2/70">
+          ※ 現在、適格請求書発行事業者登録の手続中です。正式リリースは 2026 年 7 月予定。
+        </p>
       </div>
     </section>
   );

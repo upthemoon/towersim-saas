@@ -67,7 +67,7 @@ export default function OGImage() {
               letterSpacing: "0.08em",
             }}
           >
-            建設業・運送業向け SaaS
+            建設業・運送業など労務原価ベースの業種向け SaaS
           </div>
           <div
             style={{

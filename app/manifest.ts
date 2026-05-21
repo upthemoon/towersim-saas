@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "TowerSim — 建設業・運送業の原価・交渉シミュレーター",
+    name: "TowerSim — 建設業・運送業など労務原価ベースの業種向け 原価・交渉シミュレーター",
     short_name: "TowerSim",
     description:
-      "建設業・運送業の経営者・営業担当のための原価計算と単価交渉シミュレーター。総額提示案件・単価交渉・受注可否判断をスマホでもPCでも。",
+      "建設業・運送業など労務原価が中心の業種の経営者・営業担当のための原価計算と単価交渉シミュレーター。総額提示案件・単価交渉・受注可否判断をスマホでもPCでも。",
     start_url: "/app",
     scope: "/",
     display: "standalone",

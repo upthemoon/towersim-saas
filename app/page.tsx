@@ -50,7 +50,7 @@ function Hero() {
     <section className="bg-paper bg-blueprint border-b border-rule">
       <div className="max-w-6xl mx-auto px-6 py-20 grid lg:grid-cols-[1.4fr_1fr] gap-12 items-center">
         <div>
-          <span className="stamp text-xs">建設業・運送業向け SaaS</span>
+          <span className="stamp text-xs">建設業・運送業など労務原価ベースの業種向け SaaS</span>
           <h1 className="font-mincho text-4xl md:text-5xl font-bold mt-6 leading-tight text-ink">
             原価と交渉、<br />
             <span className="text-rust">紙の感覚</span>でデジタルに。

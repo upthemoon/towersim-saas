@@ -4,11 +4,24 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
+/**
+ * Open redirect 対策: 同一オリジン内 path のみ許可 (OWASP CWE-601)
+ * 2026-05-27 security-auditor 指摘
+ */
+function sanitizeRedirect(raw: string | null): string {
+  const fallback = "/app";
+  if (!raw) return fallback;
+  if (!raw.startsWith("/")) return fallback;
+  if (raw.startsWith("//")) return fallback;
+  if (raw.startsWith("/\\")) return fallback;
+  return raw;
+}
+
 export function SigninForm() {
   const router = useRouter();
   const params = useSearchParams();
   const initialMode = params.get("mode") === "signup" ? "signup" : "signin";
-  const redirectPath = params.get("redirect") ?? "/app";
+  const redirectPath = sanitizeRedirect(params.get("redirect"));
 
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");

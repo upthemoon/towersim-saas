@@ -18,6 +18,9 @@ export default function TokushohoPage() {
             <Row label="販売事業者">
               Up the Moon合同会社
             </Row>
+            <Row label="適格請求書発行事業者登録番号">
+              T3180003025866
+            </Row>
             <Row label="運営統括責任者">
               吉岡 涼（代表社員）
             </Row>

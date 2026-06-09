@@ -19,7 +19,14 @@ export async function POST(request: Request) {
     const priceId = plan === "yearly" ? STRIPE_PRICE_YEARLY : STRIPE_PRICE_MONTHLY;
 
     const { data: profile } = await supabase
-      .from("profiles").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
+      .from("profiles").select("stripe_customer_id, trial_ends_at").eq("user_id", user.id).maybeSingle();
+
+    // 既存の trial_ends_at を未来日なら Stripe Trial と同期 (E-4 対応・特商法「試用期間終了後に課金」と整合)
+    const trialEndUnix = profile?.trial_ends_at
+      ? Math.floor(new Date(profile.trial_ends_at).getTime() / 1000)
+      : null;
+    const nowUnix = Math.floor(Date.now() / 1000);
+    const useTrial = trialEndUnix !== null && trialEndUnix > nowUnix;
 
     const origin = new URL(request.url).origin;
     const session = await stripe.checkout.sessions.create({
@@ -30,8 +37,12 @@ export async function POST(request: Request) {
       customer_email: profile?.stripe_customer_id ? undefined : user.email ?? undefined,
       client_reference_id: user.id,
       metadata: { user_id: user.id, plan },
-      subscription_data: { metadata: { user_id: user.id, plan } },
-      success_url: `${origin}/app?checkout=success`,
+      subscription_data: {
+        metadata: { user_id: user.id, plan },
+        ...(useTrial && trialEndUnix !== null ? { trial_end: trialEndUnix } : {}),
+      },
+      // B-2: Webhook 反映前のレース回避・/billing に着地させて「処理中」メッセージを表示
+      success_url: `${origin}/billing?checkout=success`,
       cancel_url: `${origin}/billing?checkout=canceled`,
       allow_promotion_codes: true,
     });

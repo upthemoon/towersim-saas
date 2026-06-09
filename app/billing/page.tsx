@@ -16,10 +16,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const profile = await ensureProfile(supabase, user.id);
   const params = await searchParams;
   const expired = params.reason === "expired";
+  const justCheckedOut = params.checkout === "success";
+  const checkoutCanceled = params.checkout === "canceled";
 
   // 既に有料プラン契約中 → Stripe Customer Portal でプラン変更/解約。Checkout は隠す。
+  // past_due (カード期限切れ・課金失敗) もポータル経由でカード更新できる導線を出す
   const hasActiveSubscription =
-    (profile.subscription_status === "active" || profile.subscription_status === "canceled")
+    (profile.subscription_status === "active"
+      || profile.subscription_status === "canceled"
+      || profile.subscription_status === "past_due")
     && !!profile.stripe_customer_id;
 
   return (
@@ -40,6 +45,20 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         {expired && (
           <div className="mt-6 p-4 bg-rust/10 border-l-4 border-rust text-sm">
             無料試用期間が終了しました。続けてご利用いただくにはプランを選択してください。
+          </div>
+        )}
+
+        {justCheckedOut && (
+          <div className="mt-6 p-4 bg-emerald-700/10 border-l-4 border-emerald-700 text-sm text-ink">
+            <strong>お支払いを受け付けました。</strong><br />
+            決済処理を確定中です。数秒後にステータスが反映されます。
+            このページをリロードしてご確認ください。
+          </div>
+        )}
+
+        {checkoutCanceled && (
+          <div className="mt-6 p-4 bg-ink-2/10 border-l-4 border-ink-2 text-sm text-ink-2">
+            お支払いはキャンセルされました。引き続き無料試用期間をご利用いただけます。
           </div>
         )}
 

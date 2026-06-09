@@ -11,7 +11,7 @@ export default function TokushohoPage() {
       <LegalHeader />
       <article className="max-w-3xl mx-auto px-6 py-12 text-ink">
         <h1 className="font-mincho text-3xl font-bold">特定商取引法に基づく表記</h1>
-        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月15日</p>
+        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年6月9日</p>
 
         <table className="w-full mt-8 border-collapse">
           <tbody>

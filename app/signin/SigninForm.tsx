@@ -65,6 +65,15 @@ export function SigninForm() {
         // 注1: OAuth(Google/Apple)経由の登録はこの計測対象外 (oauthLogin には未設置)。
         // 注2: GA 未初期化時 (NEXT_PUBLIC_GA_ID 未設定) は sendGAEvent が console.warn を出してスキップ (実害なし)。
         sendGAEvent("event", "sign_up", { method: "email" });
+        // Google 広告 コンバージョン: 同じ sign_up を広告側でも計測する。
+        // send_to = `${NEXT_PUBLIC_GADS_ID}/${NEXT_PUBLIC_GADS_SIGNUP_LABEL}`。
+        // ラベルは広告 → ツール → コンバージョン でアクション作成後に取得し env に設定。
+        // 未設定時 or gtag 未ロード時はスキップ (実害なし)。
+        const adsId = process.env.NEXT_PUBLIC_GADS_ID;
+        const cvLabel = process.env.NEXT_PUBLIC_GADS_SIGNUP_LABEL;
+        if (adsId && cvLabel && typeof window !== "undefined" && typeof window.gtag === "function") {
+          window.gtag("event", "conversion", { send_to: `${adsId}/${cvLabel}` });
+        }
         setInfo("確認メールを送信しました。メール内のリンクをクリックしてサインインを完了してください。");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { sendGAEvent } from "@next/third-parties/google";
 
 /**
  * Open redirect 対策: 同一オリジン内 path のみ許可 (OWASP CWE-601)
@@ -60,6 +61,10 @@ export function SigninForm() {
           options: { emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}` },
         });
         if (error) { setError(error.message); return; }
+        // GA4 コンバージョン: 新規登録フォーム送信完了時点を CV とする (メール確認前・広告効果測定の最小実装)。
+        // 注1: OAuth(Google/Apple)経由の登録はこの計測対象外 (oauthLogin には未設置)。
+        // 注2: GA 未初期化時 (NEXT_PUBLIC_GA_ID 未設定) は sendGAEvent が console.warn を出してスキップ (実害なし)。
+        sendGAEvent("event", "sign_up", { method: "email" });
         setInfo("確認メールを送信しました。メール内のリンクをクリックしてサインインを完了してください。");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });

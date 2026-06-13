@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import { PWARegister } from "./components/PWARegister";
+import { GoogleAds } from "./components/GoogleAds";
 
 const noto = Noto_Sans_JP({
   subsets: ["latin"],
@@ -55,6 +56,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const adsId = process.env.NEXT_PUBLIC_GADS_ID;
   return (
     <html lang="ja" className={`${noto.variable} ${mincho.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-paper text-ink">
@@ -63,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Analytics />
         <SpeedInsights />
         {gaId && <GoogleAnalytics gaId={gaId} />}
+        {adsId && <GoogleAds adsId={adsId} />}
       </body>
     </html>
   );

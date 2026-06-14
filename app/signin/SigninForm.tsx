@@ -33,6 +33,9 @@ export function SigninForm() {
 
   const supabase = createSupabaseBrowserClient();
   const setupIncomplete = supabase === null;
+  // OAuth (Google/Apple) は当面停止し、メール登録/ログインのみ提供。
+  // 再開時: Vercel env に NEXT_PUBLIC_OAUTH_ENABLED=true を設定 + Supabase で各プロバイダを有効化。
+  const oauthEnabled = process.env.NEXT_PUBLIC_OAUTH_ENABLED === "true";
 
   const oauthLogin = async (provider: "google" | "apple") => {
     if (!supabase) { setError("セットアップ未完了 (Supabase env が未設定)"); return; }
@@ -102,28 +105,32 @@ export function SigninForm() {
         </div>
       )}
 
-      <div className="space-y-3">
-        <button
-          onClick={() => oauthLogin("google")}
-          disabled={loading}
-          className="w-full border-2 border-rule bg-paper py-3 px-4 rounded font-bold hover:bg-paper-2 transition flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          <span>🔵</span> Google で {mode === "signup" ? "登録" : "ログイン"}
-        </button>
-        <button
-          onClick={() => oauthLogin("apple")}
-          disabled={loading}
-          className="w-full bg-ink text-paper py-3 px-4 rounded font-bold hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-           Apple で {mode === "signup" ? "登録" : "ログイン"}
-        </button>
-      </div>
+      {oauthEnabled && (
+        <>
+          <div className="space-y-3">
+            <button
+              onClick={() => oauthLogin("google")}
+              disabled={loading}
+              className="w-full border-2 border-rule bg-paper py-3 px-4 rounded font-bold hover:bg-paper-2 transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <span>🔵</span> Google で {mode === "signup" ? "登録" : "ログイン"}
+            </button>
+            <button
+              onClick={() => oauthLogin("apple")}
+              disabled={loading}
+              className="w-full bg-ink text-paper py-3 px-4 rounded font-bold hover:bg-black transition flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+               Apple で {mode === "signup" ? "登録" : "ログイン"}
+            </button>
+          </div>
 
-      <div className="flex items-center gap-3 my-6 text-xs text-ink-2">
-        <div className="flex-1 h-px bg-rule" />
-        <span>または メール</span>
-        <div className="flex-1 h-px bg-rule" />
-      </div>
+          <div className="flex items-center gap-3 my-6 text-xs text-ink-2">
+            <div className="flex-1 h-px bg-rule" />
+            <span>または メール</span>
+            <div className="flex-1 h-px bg-rule" />
+          </div>
+        </>
+      )}
 
       <form onSubmit={handleEmail} className="space-y-3" method="post" action="#">
         <input

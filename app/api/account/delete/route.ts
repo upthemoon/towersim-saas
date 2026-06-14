@@ -1,18 +1,9 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
 export const runtime = "nodejs";
-
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
-function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
 
 /**
  * 自分のアカウントを完全削除する (self-serve)。
@@ -32,7 +23,7 @@ export async function POST() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-    const admin = adminClient();
+    const admin = createSupabaseAdminClient();
 
     // 2. Stripe 顧客の有効なサブスクを即キャンセル
     const { data: profile } = await admin

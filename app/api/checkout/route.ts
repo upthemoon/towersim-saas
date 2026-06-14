@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { stripe, STRIPE_PRICE_MONTHLY, STRIPE_PRICE_YEARLY } from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-
 // stripe_customer_id の永続化は RLS で通常ユーザーに禁止されている（profiles の直接 update は
 // Webhook=service_role 経由のみ）ため、Checkout 前の Customer 確定書き込みは service_role で行う。
-function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
 
 export async function POST(request: Request) {
   try {
@@ -52,7 +44,7 @@ export async function POST(request: Request) {
       // 永続化は service_role で行い、戻り行で 0 件更新（profile 不在）を検知する。通常は
       // /billing が先に ensureProfile を呼ぶため行は存在するが、直接 /api/checkout を叩いた等で
       // 行が無いと update は静かに 0 件成功するため、webhook 任せにせずログで可視化する。
-      const { data: persisted, error: persistError } = await adminClient()
+      const { data: persisted, error: persistError } = await createSupabaseAdminClient()
         .from("profiles")
         .update({ stripe_customer_id: customerId })
         .eq("user_id", user.id)

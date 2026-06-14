@@ -1,38 +1,33 @@
 import { NextResponse } from "next/server";
 import { stripe, mapStripeStatus } from "@/lib/stripe";
-import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import type Stripe from "stripe";
 
 // Webhook は body の raw が必要なので、Next の自動 parsing は使わず手動で raw を読む。
 export const runtime = "nodejs";
 
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET!;
-
-function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
 export async function POST(request: Request) {
   const sig = request.headers.get("stripe-signature");
   if (!sig) return new NextResponse("missing signature", { status: 400 });
 
+  // env 未設定を実リクエスト時まで遅延検出しないよう、! 強制キャストではなく明示 throw する
+  // (createSupabaseAdminClient と同方針・staging での設定漏れを早期検出)。
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) throw new Error("STRIPE_WEBHOOK_SECRET not set");
+
   const raw = await request.text();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(raw, sig, WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(raw, sig, webhookSecret);
   } catch (err) {
     // 署名検証失敗の詳細はサーバログにのみ残し、レスポンスには載せない。
     console.error("[stripe webhook] signature verification failed:", (err as Error).message);
     return new NextResponse("signature verification failed", { status: 400 });
   }
 
-  const sb = adminClient();
-
   try {
+    // admin client 生成も try 内に置き、env 未設定時の throw を下の catch で 500 + ログ化する。
+    const sb = createSupabaseAdminClient();
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;

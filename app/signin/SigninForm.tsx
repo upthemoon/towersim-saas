@@ -19,6 +19,57 @@ function sanitizeRedirect(raw: string | null): string {
   return raw;
 }
 
+/**
+ * Supabase Auth (GoTrue) が返す英語のエラーメッセージを日本語に変換する。
+ * 弱いパスワードは複数理由 (文字数 / 文字種 / 漏洩) が 1 文に連結されて返ることがあるので、
+ * 検出した条件を合成して 1 つの日本語文にする。未知のメッセージは原文をそのまま返し、握りつぶさない。
+ */
+function translateAuthError(error: { message?: string; code?: string }): string {
+  const msg = error.message ?? "";
+  const code = error.code ?? "";
+
+  // --- 弱いパスワード (weak_password): 理由を合成 ---
+  const weakReasons: string[] = [];
+  const lenMatch = msg.match(/at least (\d+) characters?/i);
+  if (lenMatch) weakReasons.push(`${lenMatch[1]}文字以上にする`);
+  if (/character of each|lower.?case|upper.?case|abcdefghijklmnopqrstuvwxyz/i.test(msg)) {
+    weakReasons.push("英小文字・英大文字・数字をそれぞれ1文字以上含める");
+  }
+  if (/known to be weak|easy to guess|compromised|pwned|breach/i.test(msg)) {
+    weakReasons.push("漏洩・推測されやすいパスワードを避ける");
+  }
+  if (weakReasons.length > 0) {
+    return `次の条件を満たすパスワードを設定してください：${weakReasons.join("、")}。`;
+  }
+  if (code === "weak_password") {
+    return "パスワードが安全性の要件を満たしていません。英小文字・英大文字・数字を含む8文字以上で、推測されにくいものを設定してください。";
+  }
+
+  // --- その他のよくある認証エラー ---
+  if (code === "user_already_exists" || /already registered|already been registered/i.test(msg)) {
+    return "このメールアドレスは既に登録されています。ログインしてください。";
+  }
+  if (code === "invalid_credentials" || /Invalid login credentials/i.test(msg)) {
+    return "メールアドレスまたはパスワードが正しくありません。";
+  }
+  if (code === "email_not_confirmed" || /Email not confirmed/i.test(msg)) {
+    return "メールアドレスの確認が完了していません。確認メールのリンクをクリックしてください。";
+  }
+  if (code === "email_address_invalid" || /Unable to validate email address|invalid format/i.test(msg)) {
+    return "メールアドレスの形式が正しくありません。";
+  }
+  if (
+    code === "over_email_send_rate_limit" ||
+    code === "over_request_rate_limit" ||
+    /rate limit|too many requests|after \d+ seconds/i.test(msg)
+  ) {
+    return "リクエストが集中しています。しばらく時間をおいてから再度お試しください。";
+  }
+
+  // 既定: 未知のエラーは原文を残す (英語のまま握りつぶさない)
+  return msg || "エラーが発生しました。時間をおいて再度お試しください。";
+}
+
 export function SigninForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -48,7 +99,7 @@ export function SigninForm() {
           redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}`,
         },
       });
-      if (error) setError(error.message);
+      if (error) setError(translateAuthError(error));
     } finally {
       setLoading(false);
     }
@@ -64,7 +115,7 @@ export function SigninForm() {
           email, password,
           options: { emailRedirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectPath)}` },
         });
-        if (error) { setError(error.message); return; }
+        if (error) { setError(translateAuthError(error)); return; }
         // GA4 コンバージョン: 新規登録フォーム送信完了時点を CV とする (メール確認前・広告効果測定の最小実装)。
         // 注1: OAuth(Google/Apple)経由の登録はこの計測対象外 (oauthLogin には未設置)。
         // 注2: GA 未初期化時 (NEXT_PUBLIC_GA_ID 未設定) は sendGAEvent が console.warn を出してスキップ (実害なし)。
@@ -81,7 +132,7 @@ export function SigninForm() {
         setInfo("確認メールを送信しました。メール内のリンクをクリックしてサインインを完了してください。");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) { setError(error.message); return; }
+        if (error) { setError(translateAuthError(error)); return; }
         router.push(redirectPath);
         router.refresh();
       }

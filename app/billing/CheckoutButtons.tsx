@@ -18,9 +18,15 @@ export function CheckoutButtons() {
       let data: { url?: string; error?: string } = {};
       try { data = text ? JSON.parse(text) : {}; }
       catch {
-        throw new Error(`サーバが想定外の応答を返しました (HTTP ${r.status}): ${text.slice(0, 200)}`);
+        throw new Error("サーバが想定外の応答を返しました。時間をおいて再度お試しください。");
       }
-      if (!r.ok) throw new Error(data.error ?? `HTTP ${r.status}`);
+      if (!r.ok) {
+        throw new Error(
+          r.status === 401
+            ? "セッションの有効期限が切れました。お手数ですが再度ログインしてください。"
+            : "決済画面の準備に失敗しました。時間をおいて再度お試しください。",
+        );
+      }
       if (!data.url) throw new Error("決済画面の URL を取得できませんでした");
       window.location.href = data.url;
     } catch (e) {

@@ -31,14 +31,15 @@ create trigger trg_profiles_touch before update on public.profiles
 -- RLS: ユーザーは自分の profile だけ読める。書き込みは Webhook (service_role) のみ。
 alter table public.profiles enable row level security;
 
+-- auth.uid() は (select auth.uid()) でラップして行ごとの再評価を避ける（initplan 最適化）。
 drop policy if exists "user_read_own_profile" on public.profiles;
 create policy "user_read_own_profile" on public.profiles
-  for select using (auth.uid() = user_id);
+  for select using ((select auth.uid()) = user_id);
 
 -- ユーザー側からの insert は ensureProfile で行う（初回のみ trialing で作る）。
 drop policy if exists "user_insert_own_profile" on public.profiles;
 create policy "user_insert_own_profile" on public.profiles
-  for insert with check (auth.uid() = user_id);
+  for insert with check ((select auth.uid()) = user_id);
 
 -- 直接 update は禁止。プラン変更は必ず Stripe Webhook 経由（service_role）。
 
@@ -60,7 +61,7 @@ alter table public.scenarios enable row level security;
 
 drop policy if exists "user_crud_own_scenarios" on public.scenarios;
 create policy "user_crud_own_scenarios" on public.scenarios
-  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  for all using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
 drop trigger if exists trg_scenarios_touch on public.scenarios;
 create trigger trg_scenarios_touch before update on public.scenarios

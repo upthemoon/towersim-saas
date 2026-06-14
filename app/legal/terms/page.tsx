@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TowerIcon } from "../../components/TowerIcon";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 export const metadata = {
   title: "利用規約 | TowerSim",
@@ -11,7 +12,7 @@ export default function TermsPage() {
       <LegalHeader />
       <article className="max-w-3xl mx-auto px-6 py-12 text-ink">
         <h1 className="font-mincho text-3xl font-bold">利用規約</h1>
-        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年5月15日</p>
+        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年6月14日</p>
 
         <p className="mt-6 leading-relaxed">
           本利用規約（以下「本規約」）は、Up the Moon合同会社（以下「当社」）が提供するクラウドサービス「TowerSim」（以下「本サービス」）の利用条件を定めるものです。利用者は本規約に同意のうえ、本サービスを利用するものとします。
@@ -26,7 +27,7 @@ export default function TermsPage() {
             <li>「利用者」とは、本規約に同意のうえ本サービスを利用するすべての者をいいます。</li>
             <li>「アカウント」とは、利用者が本サービスを利用するために当社に登録した識別情報をいいます。</li>
             <li>「有料プラン」とは、本サービスのうち月額または年額の料金を支払って利用するプランをいいます。</li>
-            <li>「試用期間」とは、新規登録から一定期間、無料で有料プランと同等の機能を利用できる期間をいいます。</li>
+            <li>「試用期間」とは、新規登録から{TRIAL_DAYS}日間、無料で有料プランと同等の機能を利用できる期間をいいます。</li>
           </ul>
         </Section>
 
@@ -49,9 +50,9 @@ export default function TermsPage() {
 
         <Section title="第5条（試用期間）">
           <ol className="list-decimal pl-6 space-y-2">
-            <li>新規アカウント登録者には、別途定める日数の試用期間を提供します。</li>
+            <li>新規アカウント登録者には、{TRIAL_DAYS}日間の試用期間を提供します。</li>
             <li>試用期間中はクレジットカード登録不要で全機能を利用できます。</li>
-            <li>試用期間終了後に継続利用するには、有料プランへの加入が必要です。</li>
+            <li>試用期間終了後に継続利用するには、有料プランへの加入が必要です。試用期間中に有料プランへ加入した場合、試用期間終了時に解約しない限り、選択したプランで自動的に課金が開始されます。</li>
           </ol>
         </Section>
 

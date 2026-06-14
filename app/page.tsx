@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TowerIcon } from "./components/TowerIcon";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 export default function Home() {
   return (
@@ -64,7 +65,7 @@ function Hero() {
               href="/signin?mode=signup"
               className="inline-block bg-rust text-paper px-8 py-4 rounded font-bold text-lg hover:bg-rust-dark transition shadow-md"
             >
-              7日間 無料で試す
+              {TRIAL_DAYS}日間 無料で試す
             </Link>
           </div>
           <p className="mt-4 text-xs text-ink-2">
@@ -271,7 +272,7 @@ function Pricing() {
           />
         </div>
         <p className="text-center text-sm text-ink-2 mt-6">
-          すべてのプランで <strong className="text-rust">7日間の無料試用</strong> がついています。
+          すべてのプランで <strong className="text-rust">{TRIAL_DAYS}日間の無料試用</strong> がついています。
           試用期間中はクレジットカード登録不要。
         </p>
       </div>
@@ -331,7 +332,7 @@ function FinalCTA() {
           href="/signin?mode=signup"
           className="inline-block mt-8 bg-rust text-paper px-8 py-4 rounded font-bold hover:bg-rust-dark transition"
         >
-          7日間 無料で試す
+          {TRIAL_DAYS}日間 無料で試す
         </Link>
       </div>
     </section>

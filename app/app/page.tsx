@@ -2,7 +2,7 @@ import type { Viewport } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ensureProfile, canAccessApp } from "@/lib/subscription";
+import { ensureProfile, canAccessApp, effectiveStatus } from "@/lib/subscription";
 import { SignOutButton } from "./SignOutButton";
 import { TowerIcon } from "../components/TowerIcon";
 
@@ -23,7 +23,8 @@ export default async function AppPage() {
   const profile = await ensureProfile(supabase, user.id);
   if (!canAccessApp(profile)) redirect("/billing?reason=expired");
 
-  const trialDaysLeft = profile.subscription_status === "trialing" && profile.trial_ends_at
+  // 表示は billing と同じく実効ステータス基準に統一（期限切れトライアルでバッジを出さない）。
+  const trialDaysLeft = effectiveStatus(profile) === "trialing" && profile.trial_ends_at
     ? Math.max(0, Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null;
 

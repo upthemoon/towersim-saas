@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 export const alt = "TowerSim — 建設業の原価・交渉シミュレーター";
 export const size = { width: 1200, height: 630 };
@@ -109,7 +110,7 @@ export default function OGImage() {
           }}
         >
           <div>towersim.upthemoon.co.jp</div>
-          <div>7 日間無料・クレカ登録不要</div>
+          <div>{`${TRIAL_DAYS} 日間無料・クレカ登録不要`}</div>
         </div>
       </div>
     ),

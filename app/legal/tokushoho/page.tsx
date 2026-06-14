@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TowerIcon } from "../../components/TowerIcon";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 export const metadata = {
   title: "特定商取引法に基づく表記 | TowerSim",
@@ -11,7 +12,7 @@ export default function TokushohoPage() {
       <LegalHeader />
       <article className="max-w-3xl mx-auto px-6 py-12 text-ink">
         <h1 className="font-mincho text-3xl font-bold">特定商取引法に基づく表記</h1>
-        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年6月9日</p>
+        <p className="mt-2 text-sm text-ink-2">最終更新日: 2026年6月14日</p>
 
         <table className="w-full mt-8 border-collapse">
           <tbody>
@@ -48,8 +49,12 @@ export default function TokushohoPage() {
             <Row label="支払方法">
               クレジットカード決済（Visa / Mastercard / American Express / JCB / Diners 等）。決済は Stripe Payments Japan株式会社 を介して行われます。
             </Row>
+            <Row label="無料試用期間">
+              <p>新規登録から{TRIAL_DAYS}日間、クレジットカードの登録不要で全機能をご利用いただけます。</p>
+              <p className="mt-2 text-sm text-ink-2">※ 試用期間中に有料プランへお申し込みいただいた場合、試用期間終了後に選択されたプランで自動的に課金が開始されます。お申し込みのないまま試用期間が終了した場合、料金は一切発生しません。</p>
+            </Row>
             <Row label="支払時期">
-              <p>初回お支払い: 試用期間終了後、自動的に課金されます。</p>
+              <p>初回お支払い: {TRIAL_DAYS}日間の試用期間終了後、自動的に課金されます（有料プランへお申し込みの場合）。</p>
               <p>2回目以降: 直前の更新日と同日に自動更新・課金されます。</p>
             </Row>
             <Row label="商品の引渡時期">

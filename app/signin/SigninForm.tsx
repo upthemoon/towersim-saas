@@ -156,6 +156,10 @@ export function SigninForm() {
         </button>
       </form>
 
+      <p className="text-center text-xs text-ink-2 mt-4">
+        一度ログインすると、次回からはログイン状態が保持されます（毎回入力する必要はありません）。
+      </p>
+
       <p className="text-center text-sm text-ink-2 mt-6">
         {mode === "signup" ? (
           <>

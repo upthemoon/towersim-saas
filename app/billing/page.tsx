@@ -39,15 +39,27 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const showCheckoutWatcher =
     justCheckedOut && display !== "past_due" && display !== "canceled";
 
-  // 既に有料プラン契約中 → Stripe Customer Portal でプラン変更/解約。Checkout は隠す。
+  // 既に Stripe 管理下のサブスクがある → Customer Portal でプラン変更/解約。Checkout は隠す。
   // past_due (カード期限切れ・課金失敗) もポータル経由でカード更新できる導線を出す。
   // 判定は display(実効ステータス)ではなく DB 値ベース: canceled で期間末を過ぎ display='expired'
   // になっても、Stripe Customer がある以上はポータルから再開/カード管理できるべきなので導線を維持する。
+  //
+  // trialing も要注意: checkout が trial_ends_at を Stripe の trial_end へ同期するため、トライアル中に
+  // 支払い設定を済ませたユーザーは作成されたサブスクが status="trialing" のまま webhook が来て、
+  // subscription_status は "trialing" に据え置かれる。この層に CheckoutButtons を出すと 2 本目の
+  // サブスクが作られ、トライアル終了後に二重課金になる。そのため Portal を出す。
+  // 「アプリ内トライアルのみ(未 checkout)」「顧客だけ作って Stripe 画面で離脱(サブスク未作成)」とは
+  // current_period_end で区別する: これは webhook だけが書く列で、Checkout 完了で Stripe サブスクが
+  // provision された時のみ非 null になる。離脱層 (customer_id はあるが period=null) は二重課金に
+  // ならないので Checkout を維持し、実際に契約できるようにする。
   const hasActiveSubscription =
-    (profile.subscription_status === "active"
+    ((profile.subscription_status === "active"
       || profile.subscription_status === "canceled"
       || profile.subscription_status === "past_due")
-    && !!profile.stripe_customer_id;
+      && !!profile.stripe_customer_id)
+    || (profile.subscription_status === "trialing"
+      && !!profile.stripe_customer_id
+      && !!profile.current_period_end);
 
   return (
     <div className="min-h-screen bg-paper bg-blueprint">
@@ -139,7 +151,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             </div>
           </section>
         ) : (
-          /* 未契約 or トライアル中: 通常の Checkout */
+          /* 未契約・未 checkout のトライアル・Stripe 画面で離脱 (customer_id はあるが period=null):
+             いずれもまだ Stripe サブスク未 provision なので通常の Checkout を出して契約させる */
           <>
             <div className="mt-10">
               <CheckoutButtons />

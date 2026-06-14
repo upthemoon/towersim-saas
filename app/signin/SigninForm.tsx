@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { sendGAEvent } from "@next/third-parties/google";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 /**
  * Open redirect 対策: 同一オリジン内 path のみ許可 (OWASP CWE-601)
@@ -95,7 +96,7 @@ export function SigninForm() {
         {mode === "signup" ? "アカウント作成" : "ログイン"}
       </h1>
       <p className="text-sm text-ink-2 text-center mb-6">
-        {mode === "signup" ? "7日間無料でお試しいただけます" : "TowerSim にログインします"}
+        {mode === "signup" ? `${TRIAL_DAYS}日間無料でお試しいただけます` : "TowerSim にログインします"}
       </p>
 
       {setupIncomplete && (

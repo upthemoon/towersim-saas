@@ -25,7 +25,9 @@ export async function POST(request: Request) {
   try {
     event = stripe.webhooks.constructEvent(raw, sig, WEBHOOK_SECRET);
   } catch (err) {
-    return new NextResponse(`signature verification failed: ${(err as Error).message}`, { status: 400 });
+    // 署名検証失敗の詳細はサーバログにのみ残し、レスポンスには載せない。
+    console.error("[stripe webhook] signature verification failed:", (err as Error).message);
+    return new NextResponse("signature verification failed", { status: 400 });
   }
 
   const sb = adminClient();

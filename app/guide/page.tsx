@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { TowerIcon } from "../components/TowerIcon";
+import { TRIAL_DAYS } from "@/lib/subscription";
 
 export const metadata: Metadata = {
   title: "使い方ガイド — TowerSim",
@@ -203,7 +204,7 @@ export default function GuidePage() {
                 ヘッダーの <strong>「請求」</strong>リンクから、現在のプラン状況確認・プラン変更・解約ができます。
               </p>
               <ul>
-                <li><strong>試用期間</strong> 7 日間（クレジットカード登録不要）</li>
+                <li><strong>試用期間</strong> {TRIAL_DAYS} 日間（クレジットカード登録不要）</li>
                 <li><strong>月額</strong> ¥3,000 / <strong>年額</strong> ¥30,000（年額は 17% お得）</li>
                 <li>プラン変更時は <strong>差額が自動で日割り精算</strong>（Stripe Customer Portal で完結）</li>
                 <li>解約はいつでも可能。期間末まで利用可。</li>
@@ -241,7 +242,7 @@ export default function GuidePage() {
               </p>
               <SubHead>解約後もデータは残る？</SubHead>
               <p>
-                ローカル保存のデータは解約後もブラウザに残ります。アカウント自体の削除をご希望の場合は support@upthemoon.co.jp までご連絡ください。
+                ローカル保存のデータは解約後もブラウザに残ります。アカウント自体の削除は、ログイン後の <Link href="/billing" className="text-rust underline">請求ページ</Link> 下部「アカウントを削除」からご自身で行えます（有効な有料プラン・試用中の契約がある場合は、削除と同時に自動で解約されます）。
               </p>
               <SubHead>うまく動かない</SubHead>
               <p>
@@ -254,7 +255,7 @@ export default function GuidePage() {
                 href="/signin?mode=signup"
                 className="bg-rust text-paper px-6 py-3 rounded font-bold hover:bg-rust-dark transition"
               >
-                7日間 無料で試す
+                {TRIAL_DAYS}日間 無料で試す
               </Link>
               <Link
                 href="/"

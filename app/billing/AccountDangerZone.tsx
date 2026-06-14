@@ -34,10 +34,11 @@ export function AccountDangerZone({ hasActiveSubscription }: { hasActiveSubscrip
             "お支払いは解約されましたが、アカウント削除に失敗しました。お手数ですが support@upthemoon.co.jp までご連絡ください。",
           );
         }
+        // 内部コード(data.error)は直出しせず汎用文言に統一する（情報漏洩防止・項目6整合）。
         throw new Error(
-          data.error === "delete_failed"
-            ? "アカウント削除に失敗しました。時間をおいて再度お試しください。"
-            : data.error ?? `HTTP ${r.status}`,
+          r.status === 401
+            ? "セッションの有効期限が切れました。お手数ですが再度ログインしてください。"
+            : "アカウント削除に失敗しました。時間をおいて再度お試しください。",
         );
       }
       // 成功 → クライアント側もサインアウトしてトップへ

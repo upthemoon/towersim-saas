@@ -30,8 +30,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (e: unknown) {
-    const err = e as { message?: string; code?: string };
-    console.error("[/api/billing-portal] error:", err);
-    return NextResponse.json({ error: err.message ?? "portal_failed", code: err.code }, { status: 500 });
+    // 内部情報 (Stripe/DB の生メッセージ・コード) はクライアントに返さずサーバログに閉じる。
+    console.error("[/api/billing-portal] error:", e);
+    return NextResponse.json({ error: "portal_failed" }, { status: 500 });
   }
 }

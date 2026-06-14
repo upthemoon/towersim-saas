@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ensureProfile } from "@/lib/subscription";
+import { ensureProfile, effectiveStatus } from "@/lib/subscription";
 import { CheckoutButtons } from "./CheckoutButtons";
 import { ManageBillingButton } from "./ManageBillingButton";
 import { AccountDangerZone } from "./AccountDangerZone";
@@ -15,13 +15,18 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   if (!user) redirect("/signin?redirect=/billing");
 
   const profile = await ensureProfile(supabase, user.id);
+  // 表示は固着しうる DB 値ではなく日付から導出した実効ステータスを使う（期限切れトライアルが
+  // 「試用期間中」と矛盾表示されるのを防ぐ）。アクセス制御・課金導線の判定は別途 DB 値を使う。
+  const display = effectiveStatus(profile);
   const params = await searchParams;
   const expired = params.reason === "expired";
   const justCheckedOut = params.checkout === "success";
   const checkoutCanceled = params.checkout === "canceled";
 
   // 既に有料プラン契約中 → Stripe Customer Portal でプラン変更/解約。Checkout は隠す。
-  // past_due (カード期限切れ・課金失敗) もポータル経由でカード更新できる導線を出す
+  // past_due (カード期限切れ・課金失敗) もポータル経由でカード更新できる導線を出す。
+  // 判定は display(実効ステータス)ではなく DB 値ベース: canceled で期間末を過ぎ display='expired'
+  // になっても、Stripe Customer がある以上はポータルから再開/カード管理できるべきなので導線を維持する。
   const hasActiveSubscription =
     (profile.subscription_status === "active"
       || profile.subscription_status === "canceled"
@@ -59,7 +64,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
         {checkoutCanceled && (
           <div className="mt-6 p-4 bg-ink-2/10 border-l-4 border-ink-2 text-sm text-ink-2">
-            お支払いはキャンセルされました。引き続き無料試用期間をご利用いただけます。
+            {display === "trialing"
+              ? "お支払いはキャンセルされました。引き続き無料試用期間をご利用いただけます。"
+              : "お支払いはキャンセルされました。続けてご利用いただくにはプランを選択してください。"}
           </div>
         )}
 
@@ -67,26 +74,26 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         <div className="mt-6 p-5 bg-paper-2/60 border border-rule rounded-lg">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="text-sm text-ink-2">現在のステータス:</span>
-            <span className="font-bold text-ink">{statusLabel(profile.subscription_status)}</span>
-            {profile.subscription_status === "active" && profile.plan && (
+            <span className="font-bold text-ink">{statusLabel(display)}</span>
+            {display === "active" && profile.plan && (
               <span className="bg-emerald-700 text-paper text-xs font-bold px-2 py-0.5 rounded">
                 {profile.plan === "yearly" ? "年額プラン" : "月額プラン"}
               </span>
             )}
-            {profile.subscription_status === "canceled" && profile.plan && (
+            {display === "canceled" && profile.plan && (
               <span className="bg-ink-2 text-paper text-xs font-bold px-2 py-0.5 rounded">
                 {profile.plan === "yearly" ? "年額プラン（解約済）" : "月額プラン（解約済）"}
               </span>
             )}
           </div>
-          {profile.trial_ends_at && profile.subscription_status === "trialing" && (
+          {profile.trial_ends_at && display === "trialing" && (
             <p className="mt-2 text-sm text-ink-2">
               無料試用期間: {new Date(profile.trial_ends_at).toLocaleDateString("ja-JP")} まで
             </p>
           )}
-          {profile.current_period_end && (profile.subscription_status === "active" || profile.subscription_status === "canceled") && (
+          {profile.current_period_end && (display === "active" || display === "canceled") && (
             <p className="mt-2 text-sm text-ink-2">
-              {profile.subscription_status === "canceled"
+              {display === "canceled"
                 ? `${new Date(profile.current_period_end).toLocaleDateString("ja-JP")} まで利用可能`
                 : `次回更新: ${new Date(profile.current_period_end).toLocaleDateString("ja-JP")}`}
             </p>

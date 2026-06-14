@@ -17,6 +17,9 @@ export interface ProfileRow {
   plan: "monthly" | "yearly" | null;
 }
 
+/** 無料トライアル日数。LP・特商法・利用規約・実装すべてこの値を単一ソースとする。 */
+export const TRIAL_DAYS = 7;
+
 /** ユーザーが /app にアクセス可能かを判定する。 */
 export function canAccessApp(p: ProfileRow | null): boolean {
   if (!p) return false;
@@ -38,6 +41,31 @@ export function canAccessApp(p: ProfileRow | null): boolean {
   return false;
 }
 
+/**
+ * 表示用の実効ステータス。subscription_status は Stripe Webhook 経由でのみ更新されるため、
+ * カード未登録のままトライアルを離脱したユーザーは Stripe subscription が存在せず webhook が
+ * 発火しないので 'trialing' のまま固着する。canAccessApp は日付で正しくアクセスを閉じている
+ * が、表示ラベルは固着値を見るとズレる（期限切れなのに「試用期間中」表示）。ここで日付から
+ * 実効ステータスを導出し、表示側で使う。DB は一切書き換えない（純粋関数）。
+ * 引数は ensureProfile が必ず返す non-null な ProfileRow を前提とする（呼び出し側で null は throw 済み）。
+ */
+export function effectiveStatus(p: ProfileRow): SubscriptionStatus {
+  const now = new Date();
+  if (
+    p.subscription_status === "trialing" &&
+    (!p.trial_ends_at || new Date(p.trial_ends_at) <= now)
+  ) {
+    return "expired";
+  }
+  if (
+    p.subscription_status === "canceled" &&
+    (!p.current_period_end || new Date(p.current_period_end) <= now)
+  ) {
+    return "expired";
+  }
+  return p.subscription_status;
+}
+
 /** 認証済みユーザーの profile 行を取得（無ければ作成）。 */
 export async function ensureProfile(
   supabase: SupabaseClient,
@@ -51,18 +79,35 @@ export async function ensureProfile(
 
   if (existing) return existing as ProfileRow;
 
-  // 初回ログイン: 7日トライアル付き profile を作成
-  const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: created, error } = await supabase
+  // 初回ログイン: トライアル付き profile を作成。
+  // /app は親ページと埋め込み iframe(/simulator) が初回ロードでほぼ同時に ensureProfile を
+  // 呼ぶため、素の insert だと競合敗者が user_id PK 重複(23505)で throw → 500 になる。
+  // upsert(ON CONFLICT DO NOTHING)で競合を無害化し、確定行は再 select で取り直す。
+  // DO UPDATE にすると既存の active/canceled を trialing へ巻き戻す事故があり得るため、
+  // 必ず ignoreDuplicates(=DO NOTHING)。既存行は冒頭の maybeSingle が拾うので原則ここには来ない。
+  const trialEndsAt = new Date(
+    Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString();
+  const { error: upsertError } = await supabase
     .from("profiles")
-    .insert({
-      user_id: userId,
-      subscription_status: "trialing",
-      trial_ends_at: trialEndsAt,
-    })
-    .select("*")
-    .single();
+    .upsert(
+      {
+        user_id: userId,
+        subscription_status: "trialing",
+        trial_ends_at: trialEndsAt,
+      },
+      { onConflict: "user_id", ignoreDuplicates: true },
+    );
+  if (upsertError) throw upsertError;
 
-  if (error) throw error;
-  return created as ProfileRow;
+  // upsert が DO NOTHING で競合した場合も既存行は存在するため select は 1 行返る。
+  // maybeSingle + null チェックで「行が消えた」異常を 500 ではなく明示エラーにする。
+  const { data: row, error: selectError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (selectError) throw selectError;
+  if (!row) throw new Error("profile not found after upsert");
+  return row as ProfileRow;
 }

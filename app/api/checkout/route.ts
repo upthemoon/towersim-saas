@@ -25,6 +25,35 @@ export async function POST(request: Request) {
     const { data: profile } = await supabase
       .from("profiles").select("stripe_customer_id, trial_ends_at").eq("user_id", user.id).maybeSingle();
 
+    const origin = new URL(request.url).origin;
+
+    // 二重課金の二重防御 (server-side): 既に Stripe 管理下の有効サブスクがある顧客が、/billing の
+    // 表示ガード反映前 (webhook ラグで current_period_end がまだ DB に無い等) に再度 Checkout を
+    // 叩いても、2 本目のサブスクを作らせない。/billing 側の hasActiveSubscription だけでは webhook
+    // 反映ラグ中の窓が残るため、ここで Stripe を直接照会し、live なサブスクがあれば新規 Checkout は
+    // 作らず Customer Portal へ誘導する (プラン変更/解約はポータルで完結)。
+    // 新規顧客 (stripe_customer_id 未保存) は照会不要 = サブスク存在し得ないのでスキップ。
+    if (profile?.stripe_customer_id) {
+      // 個人 SaaS のため 1 顧客のサブスク数は Stripe デフォルト 100 件未満の前提 (account/delete と同方針)。
+      // 将来 100 件を超え得る設計にするなら autoPagingEach に変更すること。
+      const existing = await stripe.subscriptions.list({
+        customer: profile.stripe_customer_id,
+        status: "all",
+        limit: 100,
+      });
+      // live 集合は account/delete の cancelable と揃える。canceled/incomplete* は live ではないので
+      // 解約済みユーザーの再契約 (新規 Checkout) は許可する。
+      const live = new Set(["active", "trialing", "past_due", "unpaid", "paused"]);
+      if (existing.data.some((s) => live.has(s.status))) {
+        console.warn("[/api/checkout] existing live subscription; redirecting to portal:", user.id);
+        const portal = await stripe.billingPortal.sessions.create({
+          customer: profile.stripe_customer_id,
+          return_url: `${origin}/billing`,
+        });
+        return NextResponse.json({ url: portal.url });
+      }
+    }
+
     // Customer 二重作成の防止: Checkout 完了 → webhook が stripe_customer_id を書き込む前に
     // 2 回目の Checkout が走ると、profile が空のまま customer_email 経路を通り Stripe が別 Customer
     // を新規作成してしまう（先の Customer が orphan 化）。これを塞ぐため Customer は Checkout
@@ -68,7 +97,6 @@ export async function POST(request: Request) {
     const nowUnix = Math.floor(Date.now() / 1000);
     const useTrial = trialEndUnix !== null && trialEndUnix > nowUnix;
 
-    const origin = new URL(request.url).origin;
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],

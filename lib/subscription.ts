@@ -25,8 +25,15 @@ export function canAccessApp(p: ProfileRow | null): boolean {
     return !!p.trial_ends_at && new Date(p.trial_ends_at) > new Date();
   }
   if (p.subscription_status === "canceled") {
-    // キャンセル済みでも期間末まで利用可
+    // キャンセル済みでも契約期間の末日まで利用可 (current_period_end は item から取得済)。
     return !!p.current_period_end && new Date(p.current_period_end) > new Date();
+  }
+  if (p.subscription_status === "past_due") {
+    // 課金リトライ (dunning) 中は猶予してアクセスを維持する (支払い意思のある既存客を
+    // カード一時不通で即ロックしないため)。Stripe の billing_mode (legacy/flexible) に依らず
+    // 安全な挙動。dunning が尽きると Stripe が canceled/unpaid へ落とし (mapStripeStatus で
+    // canceled)、上の分岐で期間末ロックされるため、猶予は無期限ではない。
+    return true;
   }
   return false;
 }

@@ -24,7 +24,16 @@ export async function GET(request: Request) {
 
   if (code) {
     const supabase = await createSupabaseServerClient();
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      // 交換失敗 (code 失効・メールクライアントのプリフェッチ等による二重消費・verifier 欠落) を
+      // 無視して /app へ飛ばすと、未ログインのまま保護ページに着地してエラー/ループになる。
+      // signin にエラー付きで戻し、再ログインを促す。
+      const signin = new URL("/signin", origin);
+      signin.searchParams.set("redirect", redirect);
+      signin.searchParams.set("error", "auth_callback");
+      return NextResponse.redirect(signin);
+    }
   }
   return NextResponse.redirect(`${origin}${redirect}`);
 }

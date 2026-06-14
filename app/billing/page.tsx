@@ -5,6 +5,7 @@ import { ensureProfile, effectiveStatus } from "@/lib/subscription";
 import { CheckoutButtons } from "./CheckoutButtons";
 import { ManageBillingButton } from "./ManageBillingButton";
 import { AccountDangerZone } from "./AccountDangerZone";
+import { CheckoutSuccessWatcher } from "./CheckoutSuccessWatcher";
 import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,21 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const expired = params.reason === "expired";
   const justCheckedOut = params.checkout === "success";
   const checkoutCanceled = params.checkout === "canceled";
+  // checkout 成功後の自動反映シグナル。webhook が subscription を provision 済みかを表す。
+  // active は status だけで確定。トライアル中課金は status=trialing のまま webhook が来る
+  // （checkout が trial_end を Stripe に同期するため）ので、その場合は webhook のみが書く
+  // current_period_end が未来かで判定する。canceled の期間末残置値を「新規反映」と誤検知
+  // しないよう、対象を active / trialing に限定する。
+  const subscriptionProvisioned =
+    display === "active" ||
+    (display === "trialing" &&
+      !!profile.current_period_end &&
+      new Date(profile.current_period_end) > new Date());
+  // past_due / canceled は「直前の checkout 成功」状態ではなく専用バナー・導線が別途出る。
+  // 古い ?checkout=success URL への再訪で成功/猶予バナーが二重表示・矛盾するのを防ぐため、
+  // これらの表示状態では Watcher 自体を出さない。
+  const showCheckoutWatcher =
+    justCheckedOut && display !== "past_due" && display !== "canceled";
 
   // 既に有料プラン契約中 → Stripe Customer Portal でプラン変更/解約。Checkout は隠す。
   // past_due (カード期限切れ・課金失敗) もポータル経由でカード更新できる導線を出す。
@@ -54,11 +70,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           </div>
         )}
 
-        {justCheckedOut && (
-          <div className="mt-6 p-4 bg-emerald-700/10 border-l-4 border-emerald-700 text-sm text-ink">
-            <strong>お支払いを受け付けました。</strong><br />
-            決済処理を確定中です。数秒後にステータスが反映されます。
-            このページをリロードしてご確認ください。
+        {showCheckoutWatcher && (
+          <CheckoutSuccessWatcher active={subscriptionProvisioned} />
+        )}
+
+        {display === "past_due" && (
+          <div className="mt-6 p-4 bg-rust/10 border-l-4 border-rust text-sm text-ink">
+            <strong>お支払いの確認が必要です。</strong><br />
+            カードの有効期限切れなどでお支払いを確認できませんでした。下記の「プラン変更・解約・お支払い情報」からカード情報を更新してください。
+            猶予期間（Stripe による自動再請求）の間はご利用を継続できますが、期間を過ぎるとサブスクリプションは自動的に解約されます。
           </div>
         )}
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { sendGAEvent } from "@next/third-parties/google";
 import { TRIAL_DAYS } from "@/lib/subscription";
@@ -71,7 +71,6 @@ function translateAuthError(error: { message?: string; code?: string }): string 
 }
 
 export function SigninForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const initialMode = params.get("mode") === "signup" ? "signup" : "signin";
   const redirectPath = sanitizeRedirect(params.get("redirect"));
@@ -80,7 +79,12 @@ export function SigninForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // /auth/callback がコード交換に失敗すると ?error=auth_callback で戻すので、初期表示で案内する。
+  const [error, setError] = useState<string | null>(
+    params.get("error") === "auth_callback"
+      ? "ログインの確認に失敗しました。お手数ですが、もう一度ログインしてください。"
+      : null,
+  );
   const [info, setInfo] = useState<string | null>(null);
 
   const supabase = createSupabaseBrowserClient();
@@ -109,6 +113,7 @@ export function SigninForm() {
     e.preventDefault();
     if (!supabase) { setError("セットアップ未完了 (Supabase env が未設定)"); return; }
     setError(null); setInfo(null); setLoading(true);
+    let navigating = false;
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -133,11 +138,17 @@ export function SigninForm() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) { setError(translateAuthError(error)); return; }
-        router.push(redirectPath);
-        router.refresh();
+        // ログイン直後は router.push + refresh のクライアント側 RSC 遷移だと、新しい認証クッキーが
+        // サーバへ伝播し切る前に保護ページ(/app)の RSC フェッチが走り、
+        // 「A server error occurred / Reload して」表示になることがある(手動リロード=フルロードだと直る)。
+        // 毎回フルロード遷移にして、サーバが確実に新セッションで描画するようにする。
+        navigating = true;
+        window.location.assign(redirectPath);
+        return;
       }
     } finally {
-      setLoading(false);
+      // フルロード遷移中はボタンを「処理中…」のまま固定し、二度押しを防ぐ。
+      if (!navigating) setLoading(false);
     }
   };
 

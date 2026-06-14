@@ -4,6 +4,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ensureProfile } from "@/lib/subscription";
 import { CheckoutButtons } from "./CheckoutButtons";
 import { ManageBillingButton } from "./ManageBillingButton";
+import { AccountDangerZone } from "./AccountDangerZone";
 import { TowerIcon } from "../components/TowerIcon";
 
 export const dynamic = "force-dynamic";
@@ -121,6 +122,8 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             </p>
           </>
         )}
+
+        <AccountDangerZone hasActiveSubscription={hasActiveSubscription} />
       </main>
     </div>
   );

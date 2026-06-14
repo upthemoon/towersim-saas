@@ -77,13 +77,33 @@ export async function POST(request: Request) {
           item?.current_period_end
           ?? (sub as unknown as { current_period_end?: number }).current_period_end
           ?? null;
-        const { error } = await sb.from("profiles").upsert({
+        // current_period_end は webhook が唯一の供給元 (ensureProfile / checkout は書かない)。
+        // created/updated で event の subscription item が period を載せてこない (past_due 等) と
+        // periodEnd=null になり得るが、それで DB を null 上書きすると「いつまで利用可能か」が消え、
+        // canceled の期間末判定 (canAccessApp) まで巻き添えで壊れる。値が取れた時だけ書き、取れない
+        // 時は既存値を保持する (新規行なら未設定=null で問題ない)。
+        // ただし deleted は terminal なので、period が取れなければ既存値を残さず null で明示クローズ
+        // する (即時解約/チャージバックで未来日が残置されアクセスが開いたままになるのを防ぐ)。
+        const payload: {
+          user_id: string;
+          stripe_customer_id: string;
+          subscription_status: typeof status;
+          plan: typeof plan;
+          current_period_end?: string | null;
+        } = {
           user_id: userId,
           stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
           subscription_status: status,
           plan,
-          current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
-        }, { onConflict: "user_id" });
+        };
+        // periodEnd===0 は理論上「即時失効」。null へ落とさず "1970-01-01" として書く方が
+        // canAccessApp の「過去日ならアクセス閉」判定に正しく乗るため != null で受ける。
+        if (periodEnd != null) {
+          payload.current_period_end = new Date(periodEnd * 1000).toISOString();
+        } else if (event.type === "customer.subscription.deleted") {
+          payload.current_period_end = null;
+        }
+        const { error } = await sb.from("profiles").upsert(payload, { onConflict: "user_id" });
         if (error) {
           // 削除済ユーザーへの FK 違反 (23503) は再送しても無駄なので 200 で無視。それ以外は再送。
           if ((error as { code?: string }).code === "23503") {
